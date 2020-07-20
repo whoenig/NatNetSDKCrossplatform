@@ -15,7 +15,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-constexpr char* MULTICAST_ADDRESS = "239.255.42.99";
+constexpr const char* MULTICAST_ADDRESS = "239.255.42.99";
 constexpr int PORT_COMMAND = 1510;
 constexpr int PORT_DATA = 1511;
 constexpr int MAX_PACKETSIZE = 100000;  // max size of packet (actual packet size is dynamic)
@@ -55,7 +55,7 @@ private:
   {
     socket_.async_receive_from(
         boost::asio::buffer(data_.data(), data_.size()), sender_endpoint_,
-        [this](boost::system::error_code ec, std::size_t length)
+        [this](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec)
           {
@@ -64,6 +64,8 @@ private:
             Unpack(data_.data());
 
             do_receive();
+          } else {
+            std::cerr << "async_receive_from error: " << ec.message() << std::endl;
           }
         });
   }
@@ -98,7 +100,7 @@ int main(int argc, char* argv[])
 
     std::vector<char> reply(MAX_PACKETSIZE);
     udp::endpoint sender_endpoint;
-    size_t reply_length = socket_cmd.receive_from(
+    /*size_t reply_length =*/ socket_cmd.receive_from(
         boost::asio::buffer(reply, MAX_PACKETSIZE), sender_endpoint);
 
     UnpackCommand(reply.data());
