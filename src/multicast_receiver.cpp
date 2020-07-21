@@ -36,6 +36,9 @@ public:
     , sender_endpoint_()
     , data_(20000)
   {
+    #if 0
+    // official example: https://www.boost.org/doc/libs/1_73_0/doc/html/boost_asio/example/cpp03/multicast/receiver.cpp
+
     // Create the socket so that multiple may be bound to the same address.
     boost::asio::ip::udp::endpoint listen_endpoint(
         listen_address, PORT_DATA);
@@ -46,6 +49,20 @@ public:
     // Join the multicast group.
     socket_.set_option(
         boost::asio::ip::multicast::join_group(multicast_address));
+    #else
+    // Alternative multicast implementation, see https://stackoverflow.com/questions/18491877/boostasio-multicast-listen-address
+
+    // Create the socket so that multiple may be bound to the same address.
+    boost::asio::ip::udp::endpoint listen_endpoint(
+        multicast_address, PORT_DATA);
+    socket_.open(listen_endpoint.protocol());
+    socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+    socket_.bind(listen_endpoint);
+
+    // Join the multicast group.
+    socket_.set_option(
+        boost::asio::ip::multicast::join_group(multicast_address.to_v4(), listen_address.to_v4()));
+    #endif
 
     do_receive();
   }
