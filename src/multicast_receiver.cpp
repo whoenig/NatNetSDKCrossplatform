@@ -98,9 +98,9 @@ int main(int argc, char* argv[])
   {
     // Connect to command port to query version
 
-    if (argc != 2)
+    if (argc != 3)
     {
-      std::cerr << "Usage: blocking_udp_echo_client <host>\n";
+      std::cerr << "Usage: blocking_udp_echo_client <optitrack-ip> <local-ip>\n";
       return 1;
     }
 
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
     // Listen on multicast address
     boost::asio::io_service io_service;
     receiver r(io_service,
-        boost::asio::ip::address::from_string("0.0.0.0"),
+        boost::asio::ip::address::from_string(argv[2]),
         boost::asio::ip::address::from_string(MULTICAST_ADDRESS));
     io_service.run();
   }
