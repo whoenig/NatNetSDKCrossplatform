@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 ## natnettest
 add_executable(natnettest
   src/main.cpp
-  src/PacketClientHelper.cpp
+  samples/PacketClient/PacketClient.cpp
 )
 target_link_libraries(natnettest
   ${Boost_LIBRARIES}

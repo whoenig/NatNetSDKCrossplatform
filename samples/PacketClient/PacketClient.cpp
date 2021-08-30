@@ -1,5 +1,5 @@
 /* 
-Copyright © 2012 NaturalPoint Inc.
+Copyright ï¿½ 2012 NaturalPoint Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,12 +30,38 @@ Usage [optional]:
 
 #include <stdio.h>
 #include <inttypes.h>
+#ifdef ORIGINAL_SDK
 #include <tchar.h>
 #include <conio.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 #pragma warning( disable : 4996 )
+#else
+#include <cstring>
+#include <cstdlib>
+#include <vector>
+// non-standard/optional extension of C; define an unsafe version here
+// to not change example code below
+int strcpy_s(char *dest, size_t destsz, const char *src)
+{
+    strcpy(dest, src);
+    return 0;
+}
+
+template <size_t size>
+int strcpy_s(char (&dest)[size], const char *src)
+{
+    return strcpy_s(dest, size, src);
+}
+
+template <typename... Args>
+int sprintf_s(char *buffer, size_t bufsz, const char *format, Args... args)
+{
+    return sprintf(buffer, format, args...);
+}
+
+#endif
 
 #define MAX_NAMELENGTH              256
 
@@ -78,11 +104,14 @@ typedef struct
 
 } sPacket;
 
-
+#ifdef ORIGINAL_SDK
 bool IPAddress_StringToAddr(char *szNameOrAddress, struct in_addr *Address);
+#endif
 void Unpack(char* pData);
+#ifdef ORIGINAL_SDK
 int GetLocalIPAddresses(unsigned long Addresses[], int nMax);
 int SendCommand(char* szCOmmand);
+#endif
 
 // This should match the multicast address listed in Motive's streaming settings.
 #define MULTICAST_ADDRESS		"239.255.42.99"    
@@ -91,16 +120,19 @@ int SendCommand(char* szCOmmand);
 #define PORT_COMMAND            1510
 
 // NatNet Data channel
-#define PORT_DATA  			    1511                
+#define PORT_DATA  			    1511
 
+#ifdef ORIGINAL_SDK
 SOCKET CommandSocket;
 SOCKET DataSocket;
 in_addr ServerAddress;
 sockaddr_in HostAddr;  
+#endif
 
 int NatNetVersion[4] = {0,0,0,0};
 int ServerVersion[4] = {0,0,0,0};
 
+#ifdef ORIGINAL_SDK
 int gCommandResponse = 0;
 int gCommandResponseSize = 0;
 unsigned char gCommandResponseString[MAX_PATH];
@@ -563,6 +595,65 @@ int GetLocalIPAddresses(unsigned long Addresses[], int nMax)
 
     return 1;
 }
+#else
+
+void buildConnectPacket(std::vector<char> &buffer)
+{
+    sPacket packet;
+    packet.iMessage = NAT_CONNECT;
+    packet.nDataBytes = 0;
+    buffer.resize(4);
+    memcpy(buffer.data(), &packet, 4);
+}
+
+void UnpackCommand(char *pData)
+{
+    const sPacket *replyPacket = reinterpret_cast<const sPacket *>(pData);
+
+    // handle command
+    switch (replyPacket->iMessage)
+    {
+    // case NAT_MODELDEF:
+    //     Unpack(pData);
+    //     break;
+    // case NAT_FRAMEOFDATA:
+    //     Unpack(pData);
+    //     break;
+    case NAT_SERVERINFO:
+        for (int i = 0; i < 4; i++)
+        {
+            NatNetVersion[i] = (int)replyPacket->Data.Sender.NatNetVersion[i];
+            ServerVersion[i] = (int)replyPacket->Data.Sender.Version[i];
+        }
+        printf("NatNetVersion: %d.%d.%d.%d\n", NatNetVersion[0], NatNetVersion[1], NatNetVersion[2], NatNetVersion[3]);
+        printf("ServerVersion: %d.%d.%d.%d\n", ServerVersion[0], ServerVersion[1], ServerVersion[2], ServerVersion[3]);
+        break;
+    // case NAT_RESPONSE:
+    //     gCommandResponseSize = PacketIn.nDataBytes;
+    //     if(gCommandResponseSize==4)
+    //         memcpy(&gCommandResponse, &PacketIn.Data.lData[0], gCommandResponseSize);
+    //     else
+    //     {
+    //         memcpy(&gCommandResponseString[0], &PacketIn.Data.cData[0], gCommandResponseSize);
+    //         printf("Response : %s", gCommandResponseString);
+    //         gCommandResponse = 0;   // ok
+    //     }
+    //     break;
+    // case NAT_UNRECOGNIZED_REQUEST:
+    //     printf("[Client] received 'unrecognized request'\n");
+    //     gCommandResponseSize = 0;
+    //     gCommandResponse = 1;       // err
+    //     break;
+    // case NAT_MESSAGESTRING:
+    //     printf("[Client] Received message: %s\n", PacketIn.Data.szData);
+    //     break;
+    default:
+        printf("Unknown command response!");
+        break;
+    }
+}
+
+#endif
 
 // Funtion that assigns a time code values to 5 variables passed as arguments
 // Requires an integer from the packet as the timecode and timecodeSubframe
