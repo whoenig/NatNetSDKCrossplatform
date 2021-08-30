@@ -1,8 +1,8 @@
-include = -I../../include
-libpath = -L../../lib
-libs = -lNatNetLibShared
+include=-I../../include
+libpath=-L../../lib
+libs=-lNatNet
 
-all: build/SampleClient
+all:build/SampleClient
 
 build/SampleClient: 
 	g++ SampleClient.cpp $(include) $(libpath) $(libs) -o build/SampleClient

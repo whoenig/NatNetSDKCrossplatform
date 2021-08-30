@@ -1,5 +1,5 @@
 /* 
-Copyright © 2012 NaturalPoint Inc.
+Copyright Â© 2012 NaturalPoint Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -190,7 +190,7 @@ int main( int argc, char* argv[] )
     iResult = ConnectClient();
     if (iResult != ErrorCode_OK)
     {
-        printf("Error initializing client.  See log for details.  Exiting");
+        printf("Error initializing client. See log for details. Exiting.\n");
         return 1;
     }
     else
@@ -206,16 +206,16 @@ int main( int argc, char* argv[] )
 	iResult = g_pClient->SendMessageAndWait("TestRequest", &response, &nBytes);
 	if (iResult == ErrorCode_OK)
 	{
-		printf("[SampleClient] Received: %s", (char*)response);
+		printf("[SampleClient] Received: %s\n", (char*)response);
 	}
 
 	// Retrieve Data Descriptions from Motive
-	printf("\n\n[SampleClient] Requesting Data Descriptions...");
+	printf("\n\n[SampleClient] Requesting Data Descriptions...\n");
 	sDataDescriptions* pDataDefs = NULL;
 	iResult = g_pClient->GetDataDescriptionList(&pDataDefs);
 	if (iResult != ErrorCode_OK || pDataDefs == NULL)
 	{
-		printf("[SampleClient] Unable to retrieve Data Descriptions.");
+		printf("[SampleClient] Unable to retrieve Data Descriptions.\n");
 	}
 	else
 	{
@@ -302,9 +302,17 @@ int main( int argc, char* argv[] )
                 for (int iChannel = 0; iChannel < pDevice->nChannels; iChannel++)
                     printf("\tChannel %d : %s\n", iChannel, pDevice->szChannelNames[iChannel]);
             }
+            else if (pDataDefs->arrDataDescriptions[i].type == Descriptor_Camera)
+            {
+                // Camera
+                sCameraDescription* pCamera = pDataDefs->arrDataDescriptions[i].Data.CameraDescription;
+                printf("Camera Name : %s\n", pCamera->strName);
+                printf("Camera Position (%3.2f, %3.2f, %3.2f)\n", pCamera->x, pCamera->y, pCamera->z);
+                printf("Camera Orientation (%3.2f, %3.2f, %3.2f, %3.2f)\n", pCamera->qx, pCamera->qy, pCamera->qz, pCamera->qw);
+            }
             else
             {
-                printf("Unknown data type.");
+                printf("Unknown data type.\n");
                 // Unknown
             }
         }      
@@ -319,7 +327,7 @@ int main( int argc, char* argv[] )
 	g_outputFile = fopen(szFile, "w");
 	if(!g_outputFile)
 	{
-		printf("error opening output file %s.  Exiting.", szFile);
+		printf("Error opening output file %s.  Exiting.\n", szFile);
 		exit(1);
 	}
 
@@ -332,9 +340,8 @@ int main( int argc, char* argv[] )
 
 	// Ready to receive marker stream!
 	printf("\nClient is connected to server and listening for data...\n");
-	int c;
 	bool bExit = false;
-	while(c=getch())
+	while ( const int c = getch() )
 	{
 		switch(c)
 		{
@@ -428,20 +435,21 @@ void NATNET_CALLCONV ServerDiscoveredCallback( const sNatNetDiscoveredServer* pD
         serverHotkey = static_cast<char>('1' + g_discoveredServers.size());
     }
 
-    const char* warning = "";
-
-    if ( pDiscoveredServer->serverDescription.bConnectionInfoValid == false )
-    {
-        warning = " (WARNING: Legacy server, could not autodetect settings. Auto-connect may not work reliably.)";
-    }
-
-    printf( "[%c] %s %d.%d at %s%s\n",
+    printf( "[%c] %s %d.%d at %s ",
         serverHotkey,
         pDiscoveredServer->serverDescription.szHostApp,
         pDiscoveredServer->serverDescription.HostAppVersion[0],
         pDiscoveredServer->serverDescription.HostAppVersion[1],
-        pDiscoveredServer->serverAddress,
-        warning );
+        pDiscoveredServer->serverAddress );
+
+    if ( pDiscoveredServer->serverDescription.bConnectionInfoValid )
+    {
+        printf( "(%s)\n", pDiscoveredServer->serverDescription.ConnectionMulticast ? "multicast" : "unicast" );
+    }
+    else
+    {
+        printf( "(WARNING: Legacy server, could not autodetect settings. Auto-connect may not work reliably.)\n" );
+    }
 
     g_discoveredServers.push_back( *pDiscoveredServer );
 }
@@ -456,7 +464,7 @@ int ConnectClient()
     int retCode = g_pClient->Connect( g_connectParams );
     if (retCode != ErrorCode_OK)
     {
-        printf("Unable to connect to server.  Error code: %d. Exiting", retCode);
+        printf("Unable to connect to server.  Error code: %d. Exiting.\n", retCode);
         return ErrorCode_Internal;
     }
     else
@@ -472,7 +480,7 @@ int ConnectClient()
         ret = g_pClient->GetServerDescription( &g_serverDescription );
         if ( ret != ErrorCode_OK || ! g_serverDescription.HostPresent )
         {
-            printf("Unable to connect to server. Host not present. Exiting.");
+            printf("Unable to connect to server. Host not present. Exiting.\n");
             return 1;
         }
         printf("\n[SampleClient] Server application info:\n");
@@ -658,8 +666,8 @@ void NATNET_CALLCONV DataHandler(sFrameOfMocapData* data, void* pUserData)
         else
             strcpy(szMarkerType, "Labeled");
 
-        printf("%s Marker [ModelID=%d, MarkerID=%d, Occluded=%d, PCSolved=%d, ModelSolved=%d] [size=%3.2f] [pos=%3.2f,%3.2f,%3.2f]\n",
-            szMarkerType, modelID, markerID, bOccluded, bPCSolved, bModelSolved,  marker.size, marker.x, marker.y, marker.z);
+        printf("%s Marker [ModelID=%d, MarkerID=%d] [size=%3.2f] [pos=%3.2f,%3.2f,%3.2f]\n",
+            szMarkerType, modelID, markerID, marker.size, marker.x, marker.y, marker.z);
 	}
 
     // force plates
@@ -747,9 +755,9 @@ void _WriteHeader(FILE* fp, sDataDescriptions* pBodyDefs)
 {
 	int i=0;
 
-    if(!pBodyDefs->arrDataDescriptions[0].type == Descriptor_MarkerSet)
+    if ( pBodyDefs->arrDataDescriptions[0].type != Descriptor_MarkerSet )
         return;
-        
+
 	sMarkerSetDescription* pMS = pBodyDefs->arrDataDescriptions[0].Data.MarkerSetDescription;
 
 	fprintf(fp, "<MarkerSet>\n\n");

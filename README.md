@@ -1,6 +1,6 @@
 # NatNetSDKCrossplatform
 
-This repository contains the direct depacketization method of the NatNet SDK to receive data from an OptiTrack Motion Capture system. The official SDK is only available in a binary distribution. In contrast, the code here is fully open-source. The SDK can be found at https://optitrack.com/products/natnet-sdk/ and PacketClient helper was taken from this SDK (version 3.1, Windows). The portions of the SDK that have been used and are part of this repository are licensed under Apache License, Version 2.0. The remaining code is licensed under MIT.
+This repository contains the direct depacketization method of the NatNet SDK to receive data from an OptiTrack Motion Capture system. The official SDK is only available in a binary distribution. In contrast, the code here is fully open-source. The SDK can be found at https://optitrack.com/products/natnet-sdk/ and PacketClient helper was taken from this SDK (version 4.0, Windows). The portions of the SDK that have been used and are part of this repository are licensed under Apache License, Version 2.0. The remaining code is licensed under MIT.
 
 This repository uses boost asio for communication.
 

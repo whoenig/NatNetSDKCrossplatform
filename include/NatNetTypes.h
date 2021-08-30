@@ -24,6 +24,7 @@ version 3.0.0.0
 
 
 #include <stdint.h>
+#include <string.h>     // for memset
 
 #if !defined( NULL )
 #   include <stddef.h>
@@ -83,12 +84,13 @@ version 3.0.0.0
 #define MAX_LABELED_MARKERS         1000    // maximum number of labeled markers per frame
 #define MAX_UNLABELED_MARKERS       1000    // maximum number of unlabeled (other) markers per frame
 
-#define MAX_FORCEPLATES             8       // maximum number of force plates
+#define MAX_FORCEPLATES             32      // maximum number of force plates
 #define MAX_DEVICES                 32      // maximum number of peripheral devices
 #define MAX_ANALOG_CHANNELS         32      // maximum number of data channels (signals) per analog/force plate device
 #define MAX_ANALOG_SUBFRAMES        30      // maximum number of analog/force plate frames per mocap frame
 
-#define MAX_PACKETSIZE              100000  // max size of packet (actual packet size is dynamic)
+#define MAX_PACKETSIZE              65503   // max size of packet in bytes (actual packet size is dynamic)
+                                            // (65535 byte IP limit - 20 byte IP header - 8 byte UDP header - 4 byte sPacket header = 65503 bytes)
 
 
 // Client/server message ids
@@ -112,7 +114,6 @@ version 3.0.0.0
 
 #define UNDEFINED                    999999.9999
 
-
 // NatNet uses to set reporting level of messages.
 // Clients use to set level of messages to receive.
 typedef enum Verbosity
@@ -134,7 +135,8 @@ typedef enum ErrorCode
     ErrorCode_Network,
     ErrorCode_Other,
     ErrorCode_InvalidArgument,
-    ErrorCode_InvalidOperation
+    ErrorCode_InvalidOperation,
+    ErrorCode_InvalidSize,
 } ErrorCode;
 
 
@@ -153,7 +155,8 @@ typedef enum DataDescriptors
     Descriptor_RigidBody,
     Descriptor_Skeleton,
     Descriptor_ForcePlate,
-    Descriptor_Device
+    Descriptor_Device,
+    Descriptor_Camera
 } DataDescriptors;
 
 
@@ -183,7 +186,8 @@ typedef struct sSender_Server
 
 
 // packet
-// note : only used by clients who are depacketizing NatNet packets directly
+// Describes basic NatNet packet structure.  
+// Only used publicly by clients who are depacketizing NatNet packets directly
 typedef struct sPacket
 {
     uint16_t iMessage;                      // message ID (e.g. NAT_FRAMEOFDATA)
@@ -198,6 +202,22 @@ typedef struct sPacket
         sSender_Server  SenderServer;
     } Data;                                 // payload - statically allocated for convenience.  Actual packet size is determined by  nDataBytes
 } sPacket;
+
+// sConnectionOptions
+// Describes optional connection arguments.
+// Only used publicly by clients who are depacketizing NatNet packets directly
+// NatNetClients use sNatNetClientConnectParams
+typedef struct sConnectionOptions
+{
+    bool subscribedDataOnly;
+    uint8_t BitstreamVersion[4];
+#if defined(__cplusplus)
+    sConnectionOptions() : subscribedDataOnly(false)
+    {
+        memset(BitstreamVersion, 0, sizeof(BitstreamVersion));
+    }
+#endif
+} sConnectionOptions;
 
 #pragma pack(pop)
 
@@ -233,7 +253,15 @@ typedef struct sMarker
     float y;                                // y position
     float z;                                // z position
     float size;                             // marker size
-    int16_t params;                         // host defined parameters
+    int16_t params;                         // host defined parameters.  Bit values:
+                                                // 0 : Occluded
+                                                // 1 : PointCloudSolved
+                                                // 2 : ModelFilled
+                                                // 3 : HasModel
+                                                // 4 : Unlabeled
+                                                // 5 : Active
+                                                // 6 : Established
+                                                // 7 : Measurement
     float residual;                         // marker error residual, in mm/ray
 } sMarker;
 
@@ -266,6 +294,7 @@ typedef struct sRigidBodyDescription
     int32_t nMarkers;                       // Number of markers associated with this rigid body
     MarkerData* MarkerPositions;            // Array of marker locations ( [nMarkers][3] )
     int32_t* MarkerRequiredLabels;          // Array of expected marker active labels - 0 if not specified. ( [nMarkers] )
+    char** szMarkerNames;                   // Array of marker names  ( [nMarkers][MAX_NAMELENGTH] )
 } sRigidBodyDescription;
 
 
@@ -283,8 +312,11 @@ typedef struct sRigidBodyData
 
 #if defined(__cplusplus)
     sRigidBodyData()
-        : ID( 0 )
-        , params( 0 )
+        : ID( 0 ),
+        x(0.0),y(0.0),z(0.0),
+        qx(0.0),qy(0.0),qz(0.0),qw(1.0),
+        MeanError(0.0),
+        params( 0 )
     {
     }
 #endif
@@ -337,6 +369,15 @@ typedef struct sDeviceDescription
     char szChannelNames[MAX_ANALOG_CHANNELS][MAX_NAMELENGTH];   // channel names
 } sDeviceDescription;
 
+// Camera description
+typedef struct sCameraDescription
+{
+    char strName[MAX_NAMELENGTH];                   // Camera Name ( can be used with Get/Set property commands )
+    float x, y, z;                                  // Position
+    float qx, qy, qz, qw;                           // Orientation
+} sCameraDescription;
+
+
 // Tracked Object data description.  
 // A Mocap Server application (e.g. Arena or TrackingTools) may contain multiple
 // tracked "objects (e.g. RigidBody, MarkerSet).  Each object will have its
@@ -351,6 +392,7 @@ typedef struct sDataDescription
         sSkeletonDescription*   SkeletonDescription;
         sForcePlateDescription* ForcePlateDescription;
         sDeviceDescription*     DeviceDescription;
+        sCameraDescription*     CameraDescription;
     } Data;
 } sDataDescription;
 
@@ -382,7 +424,7 @@ typedef struct sDeviceData
     int32_t ID;                                         // Device ID (from data description)
     int32_t nChannels;                                  // # of active channels (signals) for this device
     sAnalogChannelData ChannelData[MAX_ANALOG_CHANNELS];// Channel (signal) data (e.g. ai0, ai1, ai2)
-    int16_t params;                                     // Host defined flags
+    int16_t params;                                     // [b0:trigger bit] [b1:reserved] [b2:is synthetic data?] [b3,b4: mocap frame offset]
 } sDeviceData;
 
 // Single frame of data (for all tracked objects)
@@ -417,7 +459,7 @@ typedef struct sFrameOfMocapData
     uint64_t CameraMidExposureTimestamp;            // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
     uint64_t CameraDataReceivedTimestamp;           // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
     uint64_t TransmitTimestamp;                     // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
-    int16_t params;                                 // host defined parameters
+    int16_t params;                                 // [b0:recording] [b1:model list changed] [b2: Live/Edit mode (0=Live, 1=Edit)]
 } sFrameOfMocapData;
 
 
@@ -429,6 +471,8 @@ typedef struct sNatNetClientConnectParams
     const char* serverAddress;
     const char* localAddress;
     const char* multicastAddress;
+	bool subscribedDataOnly;
+	uint8_t BitstreamVersion[4];					 // client requests specific version of data bitstream (typically packet clients only)
 
 #if defined(__cplusplus)
     sNatNetClientConnectParams()
@@ -438,7 +482,9 @@ typedef struct sNatNetClientConnectParams
         , serverAddress( NULL )
         , localAddress( NULL )
         , multicastAddress( NULL )
+		, subscribedDataOnly ( false )
     {
+        memset(BitstreamVersion, 0, sizeof(BitstreamVersion));
     }
 #endif
 } sNatNetClientConnectParams;

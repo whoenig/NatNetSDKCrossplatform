@@ -32,6 +32,8 @@ in the uncompressed NatNet SDK directory.
 3.[Linux] Build the sample. While in the SampleClient directory, enter make 
 clean all and compile the sample.
 
+     - make clean
+     - make -f makefile
 
 4.[Linux] Once the sample is built, navigate to the build output folder.
 
@@ -41,7 +43,7 @@ In order to run compiled NatNetSDK samples, the directory of the NatNet library
 (libNatNetLibShared.so)	must be specified. To do this, set up an environment
 variable for defining the path to the library file directory:
 
-   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH: {lib folder directory}
+   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{insert lib folder directory here}
 
 
 6.[Motive] Start an Optitrack server (Motive).
@@ -52,7 +54,11 @@ stream onto a network that the Linux machine is connected to; not local
 loopback nor the camera network.
 
 
-8.[Linux] Start SampleClient.exe. 
-Now, Start the client application from shell. Once the application starts, it will search the networks and list out available tracking servers. From the list, select the Optitrack server from the above step to start receiving tracking data.
+8.[Linux] Start SampleClient. 
+Now, Start the client application from shell. 
+Once the application starts, it will search the networks and list out available
+tracking servers. From the list, select the Optitrack server from the above step 
+to start receiving tracking data. If you built it to be a (.exe) file instead of 
+the default file without a file type then run that command instead. 
 
-  - ./SampleClient.exe
+  - ./SampleClient

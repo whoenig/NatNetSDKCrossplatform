@@ -36,9 +36,11 @@ public:
     ErrorCode SendMessageAndWait( const char* szRequest, int tries, int timeout, void** ppServerResponse, int* pResponseSize );
 
     ErrorCode GetServerDescription( sServerDescription* pServerDescription );
-    ErrorCode GetDataDescriptionList( sDataDescriptions** ppDataDescriptions );
+    ErrorCode GetDataDescriptionList( sDataDescriptions** ppDataDescriptions, uint32_t descriptionTypesMask = 0xFFFFFFFF );
 
-	void ValidateAuthenticationToken( const char* challengeToken, char* authToken);
+	void ValidateAuthenticationToken( const char* challengeToken, char* authToken );
+
+    ErrorCode GetPredictedRigidBodyPose(int32_t streamingId, sRigidBodyData& outRbPose, double dt = 0);
 
     double SecondsSinceHostTimestamp( uint64_t hostTimestamp ) const;
 
