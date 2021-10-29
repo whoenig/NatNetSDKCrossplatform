@@ -10,11 +10,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 # Executables
 
-## natnettest
-add_executable(natnettest
+## PacketClient
+add_executable(packetClient
   src/main.cpp
   samples/PacketClient/PacketClient.cpp
 )
-target_link_libraries(natnettest
+target_link_libraries(packetClient
   ${Boost_LIBRARIES}
+)
+
+## SampleClient
+include_directories(include)
+link_directories(lib/ubuntu)
+add_executable(sampleClient
+  samples/SampleClient/SampleClient.cpp
+)
+target_link_libraries(sampleClient
+  NatNet
 )
