@@ -191,6 +191,9 @@ Description of the server application.
         <member name="F:NatNetML.FrameOfMocapData.LabeledMarkers">
             <summary>Labeled Marker data</summary>
         </member>
+        <member name="F:NatNetML.FrameOfMocapData.Assets">
+            <summary>Asset data</summary>
+        </member>
         <member name="F:NatNetML.FrameOfMocapData.Skeletons">
             <summary>Skeleton data</summary>
         </member>
@@ -211,6 +214,9 @@ Description of the server application.
         </member>
         <member name="F:NatNetML.FrameOfMocapData.nMarkers">
             <summary>number of labeled markers in this frame</summary>
+        </member>
+        <member name="F:NatNetML.FrameOfMocapData.nAssets">
+            <summary>number of assets in this frame</summary>
         </member>
         <member name="F:NatNetML.FrameOfMocapData.nSkeletons">
             <summary>number of Skeletons in this frame</summary>
@@ -236,6 +242,12 @@ Description of the server application.
         <member name="F:NatNetML.FrameOfMocapData.bRecording">
             <summary>recording in Motive</summary>
         </member>
+        <member name="F:NatNetML.FrameOfMocapData.PrecisionTimestampFractionalSeconds">
+            <summary>Hi resolution timestamp (e.g. PTP) (optionally present) (NatNet 4.1 and later)</summary>
+        </member>
+        <member name="F:NatNetML.FrameOfMocapData.PrecisionTimestampSeconds">
+            <summary>Hi resolution timestamp (e.g. PTP) (optionally present) (NatNet 4.1 and later)</summary>
+        </member>
         <member name="F:NatNetML.FrameOfMocapData.TransmitTimestamp">
             <summary>Host high resolution timestamp of NatNet data transmission.</summary>
         </member>
@@ -254,6 +266,26 @@ Description of the server application.
         <member name="T:NatNetML.FrameOfMocapData">
             <summary>
 A single frame of all data (Markers, RigidBodies, etc) captured by the server.
+</summary>
+        </member>
+        <member name="F:NatNetML.AssetData.Markers">
+            <summary>Marker data</summary>
+        </member>
+        <member name="F:NatNetML.AssetData.nMarkers">
+            <summary>Number of markers in this frame of data</summary>
+        </member>
+        <member name="F:NatNetML.AssetData.RigidBodies">
+            <summary>Rigid body data</summary>
+        </member>
+        <member name="F:NatNetML.AssetData.nRigidBodies">
+            <summary>Number of rigid bodies in this frame of data</summary>
+        </member>
+        <member name="F:NatNetML.AssetData.AssetID">
+            <summary>AssetID - correlates to AssetDescriptor ID</summary>
+        </member>
+        <member name="T:NatNetML.AssetData">
+            <summary>
+Asset data for a single mocap frame
 </summary>
         </member>
         <member name="F:NatNetML.DeviceData.ChannelData">
@@ -364,17 +396,46 @@ Recorded rigid body data for a single RigidBody for a single frame
 Recorded optical marker data for a single Markerset (MarkerSet, RigidBody, Skeleton) on a single frame. This data is model-filled where occluded.
 </summary>
         </member>
-        <member name="F:NatNetML.Skeleton.RigidBodies">
-            <summary>Array of MarkerNames</summary>
+        <member name="F:NatNetML.AssetDescriptor.Markers">
+            <summary>Array of Marker Descriptors</summary>
         </member>
-        <member name="F:NatNetML.Skeleton.nRigidBodies">
+        <member name="F:NatNetML.AssetDescriptor.nMarkers">
+            <summary>Marker count</summary>
+        </member>
+        <member name="F:NatNetML.AssetDescriptor.RigidBodies">
+            <summary>Array of Rigid Bodies</summary>
+        </member>
+        <member name="F:NatNetML.AssetDescriptor.nRigidBodies">
             <summary>Unique identifier of Rigid Body's parent RigidBody</summary>
         </member>
+        <member name="F:NatNetML.AssetDescriptor.AssetID">
+            <summary>User defined ID (correlates to sAssetData)</summary>
+        </member>
+        <member name="F:NatNetML.AssetDescriptor.AssetType">
+            <summary>
+Asset ID
+1 = TrainedMarkerset
+</summary>
+        </member>
+        <member name="F:NatNetML.AssetDescriptor.Name">
+            <summary>Asset name</summary>
+        </member>
+        <member name="T:NatNetML.AssetDescriptor">
+            <summary>
+Describes a Skeleton 
+</summary>
+        </member>
+        <member name="F:NatNetML.Skeleton.RigidBodies">
+            <summary>Array of Rigid Bodies</summary>
+        </member>
+        <member name="F:NatNetML.Skeleton.nRigidBodies">
+            <summary>Number of Rigid Bodies in Skeleton</summary>
+        </member>
         <member name="F:NatNetML.Skeleton.ID">
-            <summary>Unique identifier of Rigid Body</summary>
+            <summary>Unique identifier of Skeleton</summary>
         </member>
         <member name="F:NatNetML.Skeleton.Name">
-            <summary>App defined name for the Rigid Body name</summary>
+            <summary>App defined name for the Skeleton name</summary>
         </member>
         <member name="T:NatNetML.Skeleton">
             <summary>
@@ -510,6 +571,35 @@ Describes a ForcePlate - A named object with position and orientation, typically
         <member name="T:NatNetML.RigidBody">
             <summary>
 Describes a RigidBody - A named object with position and orientation, typically defined by 3 or more markers
+</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.params">
+            <summary>
+Marker flags.
+0 = Active Marker
+</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.size">
+            <summary>Marker size (mms)</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.z">
+            <summary>Marker initial Z position</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.y">
+            <summary>Marker initial Y position</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.x">
+            <summary>Marker initial X position</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.ID">
+            <summary>Marker ID</summary>
+        </member>
+        <member name="F:NatNetML.MarkerDescriptor.Name">
+            <summary>Marker Name</summary>
+        </member>
+        <member name="T:NatNetML.MarkerDescriptor">
+            <summary>
+Describes a Marker - a named 3D point with a position and ID
 </summary>
         </member>
         <member name="F:NatNetML.MarkerSet.MarkerNames">

@@ -13,12 +13,16 @@
 // the use of this software, even if advised of the possibility of such damage.
 //=============================================================================----
 
+/*********************************************************************
+ * \page   NatNetCAPI.h
+ * \file   NatNetCAPI.h
+ * \brief  C language compatible helper functions for the NatNet SDK.
+ *********************************************************************/
+
 #pragma once
 
 #include "NatNetTypes.h"
 
-//! @file
-//! @brief C language compatible helper functions for the NatNet SDK.
 
 #if defined( __cplusplus )
 extern "C" {

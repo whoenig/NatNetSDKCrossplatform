@@ -38,8 +38,6 @@ public:
     ErrorCode GetServerDescription( sServerDescription* pServerDescription );
     ErrorCode GetDataDescriptionList( sDataDescriptions** ppDataDescriptions, uint32_t descriptionTypesMask = 0xFFFFFFFF );
 
-	void ValidateAuthenticationToken( const char* challengeToken, char* authToken );
-
     ErrorCode GetPredictedRigidBodyPose(int32_t streamingId, sRigidBodyData& outRbPose, double dt = 0);
 
     double SecondsSinceHostTimestamp( uint64_t hostTimestamp ) const;

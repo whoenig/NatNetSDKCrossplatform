@@ -29,3 +29,13 @@ add_executable(sampleClient
 target_link_libraries(sampleClient
   NatNet
 )
+
+## MinimalClient
+include_directories(include)
+link_directories(lib/ubuntu)
+add_executable(minimalClient
+  samples/MinimalClient/MinimalClient.cpp
+)
+target_link_libraries(minimalClient
+  NatNet
+)

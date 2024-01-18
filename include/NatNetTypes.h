@@ -17,7 +17,7 @@
 NatNetTypes defines the public, common data structures and types
 used when working with NatNetServer and NatNetClient objects.
 
-version 3.0.0.0
+version 4.1.0.0
 */
 
 #pragma once
@@ -76,6 +76,7 @@ version 3.0.0.0
 #define MAX_MODELS                  2000    // maximum number of total models (data descriptions)
 #define MAX_MARKERSETS              1000    // maximum number of MarkerSets 
 #define MAX_RIGIDBODIES             1000    // maximum number of RigidBodies
+#define MAX_ASSETS                  1000    // Maximum number of Assets
 #define MAX_NAMELENGTH              256     // maximum length for strings
 #define MAX_MARKERS                 200     // maximum number of markers per MarkerSet
 #define MAX_RBMARKERS               20      // maximum number of markers per RigidBody
@@ -156,9 +157,15 @@ typedef enum DataDescriptors
     Descriptor_Skeleton,
     Descriptor_ForcePlate,
     Descriptor_Device,
-    Descriptor_Camera
+    Descriptor_Camera,
+    Descriptor_Asset
 } DataDescriptors;
 
+typedef enum AssetTypes
+{
+    AssetType_Undefined = 0,
+    AssetType_TrainedMarkerset = 1
+} AssetTypes;
 
 typedef float MarkerData[3];                // posX, posY, posZ
 
@@ -241,6 +248,19 @@ typedef struct sServerDescription
     uint8_t ConnectionMulticastAddress[4];  // The multicast group address to use for a multicast connection.
 } sServerDescription;
 
+// Marker Description
+typedef struct sMarkerDescription
+{
+    char szName[MAX_NAMELENGTH];            // Marker Name
+    int32_t ID;                             // Unique ID
+    float x;                                // initial x position
+    float y;                                // initial y position
+    float z;                                // initial z position
+    float size;                             // Marker size
+    int16_t params;                         // Host defined parameters.  Bit values:
+                                                // 0 : Active
+
+} sMarkerDescription;
 
 // Marker
 typedef struct sMarker
@@ -262,7 +282,7 @@ typedef struct sMarker
                                                 // 5 : Active
                                                 // 6 : Established
                                                 // 7 : Measurement
-    float residual;                         // marker error residual, in mm/ray
+    float residual;                         // marker error residual, in m/ray
 } sMarker;
 
 
@@ -307,7 +327,7 @@ typedef struct sRigidBodyData
 
     float x, y, z;                          // Position
     float qx, qy, qz, qw;                   // Orientation
-    float MeanError;                        // Mean measure-to-solve deviation
+    float MeanError;                        // Mean measure-to-solve deviation (mean marker error) (meters)
     int16_t params;                         // Host defined tracking flags
 
 #if defined(__cplusplus)
@@ -341,7 +361,7 @@ typedef struct sSkeletonData
     sRigidBodyData* RigidBodyData;                          // Array of RigidBody data
 } sSkeletonData;
 
-// FrocePlate description
+// ForcePlate description
 typedef struct sForcePlateDescription
 {
     int32_t ID;                                     // used for order, and for identification in the data stream
@@ -377,6 +397,33 @@ typedef struct sCameraDescription
     float qx, qy, qz, qw;                           // Orientation
 } sCameraDescription;
 
+// Asset description
+typedef struct sAssetDescription
+{
+    char szName[MAX_NAMELENGTH];                            // Name
+    int32_t AssetType;                                      // 1 : Trained MarkerSet
+    int32_t AssetID;                                        // User defined ID (correlates to sAssetData)
+
+    int32_t nRigidBodies;                                   // # of rigid bodies in asset
+    sRigidBodyDescription RigidBodies[MAX_SKELRIGIDBODIES]; // Array of rigid body descriptions 
+
+    int32_t nMarkers;                                        // # of markers in asset definition
+    sMarkerDescription Markers[MAX_MARKERS];                 // Array of marker descriptions
+
+} sAssetDescription;
+
+// Asset Data
+typedef struct sAssetData
+{
+    int32_t assetID;                                        // User defined ID (correlates to sAssetDescription )
+    
+    int32_t nRigidBodies;                                   // # of rigid bodies
+    sRigidBodyData* RigidBodyData;                          // Array of RigidBody data
+
+    int32_t nMarkers;                                       // # of markers
+    sMarker* MarkerData;                                    // Array of marker data
+
+} sAssetData;
 
 // Tracked Object data description.  
 // A Mocap Server application (e.g. Arena or TrackingTools) may contain multiple
@@ -393,6 +440,7 @@ typedef struct sDataDescription
         sForcePlateDescription* ForcePlateDescription;
         sDeviceDescription*     DeviceDescription;
         sCameraDescription*     CameraDescription;
+        sAssetDescription*      AssetDescription;
     } Data;
 } sDataDescription;
 
@@ -444,6 +492,9 @@ typedef struct sFrameOfMocapData
     int32_t nSkeletons;                             // # of Skeletons
     sSkeletonData Skeletons[MAX_SKELETONS];         // Skeleton data
 
+    int32_t nAssets;                                // # of Assets
+    sAssetData Assets[MAX_ASSETS];                  // Asset data
+
     int32_t nLabeledMarkers;                        // # of Labeled Markers
     sMarker LabeledMarkers[MAX_LABELED_MARKERS];    // Labeled Marker data (labeled markers not associated with a "MarkerSet")
 
@@ -459,7 +510,12 @@ typedef struct sFrameOfMocapData
     uint64_t CameraMidExposureTimestamp;            // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
     uint64_t CameraDataReceivedTimestamp;           // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
     uint64_t TransmitTimestamp;                     // Given in host's high resolution ticks (from e.g. QueryPerformanceCounter).
-    int16_t params;                                 // [b0:recording] [b1:model list changed] [b2: Live/Edit mode (0=Live, 1=Edit)]
+    uint32_t PrecisionTimestampSecs;                // External precision timestamp (if present, e.g. PTP).
+    uint32_t PrecisionTimestampFractionalSecs;      // External precision timestamp (if present, e.g. PTP).
+    int16_t params;                                 // [b0: recording] 
+                                                    // [b1: model list changed]
+                                                    // [b2: Live/Edit mode (0=Live, 1=Edit)]
+                                                    // [b3: bitstream version changed]
 } sFrameOfMocapData;
 
 
