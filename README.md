@@ -1,3 +1,6 @@
+[![CMake](https://github.com/whoenig/NatNetSDKCrossplatform/actions/workflows/cmake.yml/badge.svg)](https://github.com/whoenig/NatNetSDKCrossplatform/actions/workflows/cmake.yml)
+
+
 # NatNetSDKCrossplatform
 
 This repository contains the NatNet SDK to receive data from an OptiTrack Motion Capture system. The SDK can be found at https://optitrack.com/products/natnet-sdk/.
