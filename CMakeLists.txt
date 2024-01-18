@@ -16,7 +16,8 @@ add_executable(packetClient
   samples/PacketClient/PacketClient.cpp
 )
 target_link_libraries(packetClient
-  ${Boost_LIBRARIES}
+  Boost::system
+  Boost::thread
 )
 
 ## SampleClient
