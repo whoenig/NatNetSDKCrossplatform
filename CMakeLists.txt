@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 project(NatNetSDKCrossplatform)
 
 find_package(Boost 1.5 REQUIRED COMPONENTS system thread)
+find_package(Threads)
+
 # Enable C++14 and warnings
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,6 +30,7 @@ add_executable(sampleClient
 )
 target_link_libraries(sampleClient
   NatNet
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 ## MinimalClient
@@ -38,4 +41,5 @@ add_executable(minimalClient
 )
 target_link_libraries(minimalClient
   NatNet
+  ${CMAKE_THREAD_LIBS_INIT}
 )
