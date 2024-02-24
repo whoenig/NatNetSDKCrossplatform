@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(NatNetSDKCrossplatform)
 
-find_package(Boost 1.65 REQUIRED COMPONENTS system thread)
+find_package(Boost 1.5 REQUIRED COMPONENTS system thread)
 # Enable C++14 and warnings
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
