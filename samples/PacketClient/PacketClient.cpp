@@ -1,17 +1,16 @@
-/*
-Copyright � 2012 NaturalPoint Inc.
+//=============================================================================
+// Copyright © 2025 NaturalPoint, Inc. All Rights Reserved.
+// 
+// THIS SOFTWARE IS GOVERNED BY THE OPTITRACK PLUGINS EULA AVAILABLE AT https://www.optitrack.com/about/legal/eula.html 
+// AND/OR FOR DOWNLOAD WITH THE APPLICABLE SOFTWARE FILE(S) (“PLUGINS EULA”). BY DOWNLOADING, INSTALLING, ACTIVATING 
+// AND/OR OTHERWISE USING THE SOFTWARE, YOU ARE AGREEING THAT YOU HAVE READ, AND THAT YOU AGREE TO COMPLY WITH AND ARE
+// BOUND BY, THE PLUGINS EULA AND ALL APPLICABLE LAWS AND REGULATIONS. IF YOU DO NOT AGREE TO BE BOUND BY THE PLUGINS
+// EULA, THEN YOU MAY NOT DOWNLOAD, INSTALL, ACTIVATE OR OTHERWISE USE THE SOFTWARE AND YOU MUST PROMPTLY DELETE OR
+// RETURN IT. IF YOU ARE DOWNLOADING, INSTALLING, ACTIVATING AND/OR OTHERWISE USING THE SOFTWARE ON BEHALF OF AN ENTITY,
+// THEN BY DOING SO YOU REPRESENT AND WARRANT THAT YOU HAVE THE APPROPRIATE AUTHORITY TO ACCEPT THE PLUGINS EULA ON
+// BEHALF OF SUCH ENTITY. See license file in root directory for additional governing terms and information.
+//=============================================================================
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. */
 /**
  * \page   PacketClient.cpp
  * \file   PacketClient.cpp
@@ -137,7 +136,11 @@ int gCommandResponse = 0;
 int gCommandResponseSize = 0;
 unsigned char gCommandResponseString[MAX_PATH];
 int gCommandResponseCode = 0;
+#endif
 
+static std::string kTabStr( "  " );
+
+#ifdef ORIGINAL_SDK
 struct sParsedArgs
 {
     char    szMyIPAddress[128] = "127.0.0.1";
@@ -181,6 +184,9 @@ struct sConnectionOptions
 #endif
 };
 
+// Utility functions
+std::string GetTabString( std::string tabStr, unsigned int level );
+
 #ifdef ORIGINAL_SDK
 // Communications functions
 bool IPAddress_StringToAddr( char* szNameOrAddress, struct in_addr* Address );
@@ -189,35 +195,35 @@ int SendCommand( char* szCOmmand );
 #endif
 
 // Packet unpacking functions
-char* Unpack( char* pPacketIn );
-char* UnpackPacketHeader( char* ptr, int& messageID, int& nBytes, int& nBytesTotal );
-char* UnpackDataSize(char* ptr, int major, int minor, int& nBytes, bool skip = false );
+char* Unpack( char* pPacketIn, unsigned int level=0 );
+char* UnpackPacketHeader( char* ptr, int& messageID, int& nBytes, int& nBytesTotal, unsigned int level );
+char* UnpackDataSize(char* ptr, int major, int minor, int& nBytes, unsigned int level, bool skip = false );
 
 // Frame data
-char* UnpackFrameData( char* inptr, int nBytes, int major, int minor );
-char* UnpackFramePrefixData( char* ptr, int major, int minor );
-char* UnpackMarkersetData( char* ptr, int major, int minor );
-char* UnpackRigidBodyData( char* ptr, int major, int minor );
-char* UnpackSkeletonData( char* ptr, int major, int minor );
-char* UnpackLabeledMarkerData( char* ptr, int major, int minor );
-char* UnpackForcePlateData( char* ptr, int major, int minor );
-char* UnpackDeviceData( char* ptr, int major, int minor );
-char* UnpackFrameSuffixData(char* ptr, int major, int minor);
-char* UnpackAssetData(char* ptr, int major, int minor);
-char* UnpackAssetMarkerData(char* ptr, int major, int minor);
-char* UnpackAssetRigidBodyData(char* ptr, int major, int minor);
-char* UnpackLegacyOtherMarkers(char* ptr, int major, int minor);
+char* UnpackFrameData( char* inptr, int nBytes, int major, int minor, unsigned int level );
+char* UnpackFramePrefixData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackMarkersetData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackRigidBodyData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackSkeletonData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackLabeledMarkerData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackForcePlateData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackDeviceData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackFrameSuffixData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackAssetData( char* ptr, int major, int minor, unsigned int level=0 );
+char* UnpackAssetMarkerData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackAssetRigidBodyData( char* ptr, int major, int minor, unsigned int level );
+char* UnpackLegacyOtherMarkers( char* ptr, int major, int minor, unsigned int level );
 
 // Descriptions
-char* UnpackDescription( char* inptr, int nBytes, int major, int minor );
-char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int minor );
-char* UnpackRigidBodyDescription( char* ptr, char* targetPtr, int major, int minor );
-char* UnpackSkeletonDescription( char* ptr, char* targetPtr, int major, int minor );
-char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int minor );
-char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor );
-char* UnpackCameraDescription(char* ptr, char* targetPtr, int major, int minor);
-char* UnpackAssetDescription(char* ptr, char* targetPtr, int major, int minor);
-char* UnpackMarkerDescription(char* ptr, char* targetPtr, int major, int minor);
+char* UnpackDescription( char* inptr, int nBytes, int major, int minor, unsigned int level );
+char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackRigidBodyDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackSkeletonDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackCameraDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackAssetDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
+char* UnpackMarkerDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level );
 
 #ifdef ORIGINAL_SDK
 /**
@@ -249,7 +255,24 @@ std::map<int, std::string> wsaErrors = {
     { 10060, " WSAETIMEDOUT: Connection timed out."},
     { 10093, " WSANOTINITIALIZED: Successful WSAStartup not yet performed."}
 };
+#endif
 
+/**
+ * \brief - Generate a formatting string based on the input tabStr and the level.
+ * \return - String to use for formatting.
+*/
+std::string GetTabString( std::string tabStr, unsigned int level )
+{
+    std::string outTabStr = "";
+    unsigned int levelNum = 0;
+    for( levelNum = 0; levelNum < level; ++levelNum )
+    {
+        outTabStr += tabStr;
+    }
+    return outTabStr;
+}
+
+#ifdef ORIGINAL_SDK
 /**
  * \brief - Send command to get bitream version.
  * \return - Success or failure.
@@ -520,6 +543,7 @@ DWORD WINAPI CommandListenThread( void* dummy )
 */
 DWORD WINAPI DataListenThread( void* dummy )
 {
+    unsigned int level = 0;
     const int baseDataBytes = 48 * 1024;
     char* szData = nullptr;
     int nDataBytes = 0;
@@ -556,7 +580,7 @@ DWORD WINAPI DataListenThread( void* dummy )
                 int messageID = 0;
                 int nBytes = 0;
                 int nBytesTotal = 0;
-                UnpackPacketHeader( szData, messageID, nBytes, nBytesTotal );
+                UnpackPacketHeader( szData, messageID, nBytes, nBytesTotal, level);
                 printf( "[PacketClient DLTh] messageID %d nBytes %d nBytesTotal %d\n",
                     messageID, nBytes, nBytesTotal );
                 if( nBytesTotal <= MAX_PACKETSIZE )
@@ -1514,13 +1538,10 @@ bool TimecodeStringify( unsigned int inTimecode, unsigned int inTimecodeSubframe
  * \param pOutEntityID - output entity ID
  * \param pOutMemberID - output member ID
 */
-void DecodeMarkerID( int sourceID, int* pOutEntityID, int* pOutMemberID )
+void DecodeMarkerID( int sourceID, int& modelID, int& markerID )
 {
-    if( pOutEntityID )
-        *pOutEntityID = sourceID >> 16;
-
-    if( pOutMemberID )
-        *pOutMemberID = sourceID & 0x0000ffff;
+        modelID  = sourceID >> 16;
+        markerID = sourceID & 0x0000ffff;
 }
 
 /**
@@ -1531,25 +1552,26 @@ void DecodeMarkerID( int sourceID, int* pOutEntityID, int* pOutMemberID )
  * \param minor - NatNet Minor version
  * \return - pointer to after decoded object
 */
-char* UnpackDescription( char* inptr, int nBytes, int major, int minor )
+char* UnpackDescription( char* inptr, int nBytes, int major, int minor, unsigned int level)
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     char* ptr = inptr;
     char* targetPtr = ptr + nBytes;
     long long nBytesProcessed = (long long) ptr - (long long) inptr;
     // number of datasets
     int nDatasets = 0; memcpy( &nDatasets, ptr, 4 ); ptr += 4;
-    printf( "Dataset Count : %d\n", nDatasets );
+    printf( "%sDataset Count : %d\n", outTabStr.c_str(), nDatasets );
 #ifdef VDEBUG
     int datasetCounts[kValidDataTypes+1] = { 0,0,0,0,0,0,0 };
 #endif
     bool errorDetected = false;
     for( int i = 0; i < nDatasets; i++ )
     {
-        printf( "Dataset %d\n", i );
+        printf( "%sDataset %d\n", outTabStr.c_str(), i );
 #ifdef VDEBUG
         int nBytesUsed = (long long) ptr - (long long) inptr;
         int nBytesRemaining = nBytes - nBytesUsed;
-        printf( "Bytes Decoded: %d Bytes Remaining: %d)\n",
+        printf( "%sBytes Decoded: %d Bytes Remaining: %d)\n", outTabStr.c_str(),
             nBytesUsed, nBytesRemaining );
 #endif
 
@@ -1581,59 +1603,59 @@ char* UnpackDescription( char* inptr, int nBytes, int major, int minor )
         {
         case 0: // Markerset
         {
-            printf( "Type: 0 Markerset\n" );
-            ptr = UnpackMarkersetDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 0 Markerset\n", outTabStr.c_str() );
+            ptr = UnpackMarkersetDescription( ptr, targetPtr, major, minor, level+1 );
         }
         break;
         case 1: // rigid body
-            printf( "Type: 1 Rigid Body\n" );
-            ptr = UnpackRigidBodyDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 1 Rigid Body\n", outTabStr.c_str() );
+            ptr = UnpackRigidBodyDescription( ptr, targetPtr, major, minor, level + 4 );
             break;
         case 2: // skeleton
-            printf( "Type: 2 Skeleton\n" );
-            ptr = UnpackSkeletonDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 2 Skeleton\n", outTabStr.c_str() );
+            ptr = UnpackSkeletonDescription( ptr, targetPtr, major, minor, level + 4 );
             break;
         case 3: // force plate
-            printf( "Type: 3 Force Plate\n" );
-            ptr = UnpackForcePlateDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 3 Force Plate\n", outTabStr.c_str() );
+            ptr = UnpackForcePlateDescription( ptr, targetPtr, major, minor, level + 4 );
             break;
         case 4: // device
-            printf( "Type: 4 Device\n" );
-            ptr = UnpackDeviceDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 4 Device\n", outTabStr.c_str() );
+            ptr = UnpackDeviceDescription( ptr, targetPtr, major, minor, level + 4 );
             break;
         case 5: // camera
-            printf( "Type: 5 Camera\n" );
-            ptr = UnpackCameraDescription( ptr, targetPtr, major, minor );
+            printf( "%sType: 5 Camera\n", outTabStr.c_str() );
+            ptr = UnpackCameraDescription( ptr, targetPtr, major, minor, level + 4 );
             break;
         case 6: // asset
-            printf( "Type: 6 Asset\n");
-            ptr = UnpackAssetDescription(ptr, targetPtr, major, minor);
+            printf( "%sType: 6 Asset\n", outTabStr.c_str() );
+            ptr = UnpackAssetDescription(ptr, targetPtr, major, minor, level + 4 );
             break;
         default: // unknown type
-            printf( "Type: %d UNKNOWN\n", type );
-            printf( "ERROR: Type decode failure\n" );
+            printf( "%sType: %d UNKNOWN\n", outTabStr.c_str(), type );
+            printf( "%sERROR: Type decode failure\n", outTabStr.c_str() );
             errorDetected = true;
             break;
         }
         if( errorDetected )
         {
-            printf( "ERROR: Stopping decode\n" );
+            printf( "%sERROR: Stopping decode\n", outTabStr.c_str() );
             break;
         }
         if( ptr > targetPtr )
         {
-            printf( "UnpackDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+            printf( "%sUnpackDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
-        printf( "\t%d datasets processed of %d\n", ( i + 1 ), nDatasets );
-        printf( "\t%lld bytes processed of %d\n", ( (long long) ptr - (long long) inptr ), nBytes );
+        printf( "%s\t%d datasets processed of %d\n", outTabStr.c_str(), ( i + 1 ), nDatasets );
+        printf( "%s\t%lld bytes processed of %d\n", outTabStr.c_str(), ( (long long) ptr - (long long) inptr ), nBytes );
     }   // next dataset
 
 #ifdef VDEBUG
-    printf( "Cnt Type    Description\n" );
+    printf( "%sCnt Type    Description\n", outTabStr.c_str() );
     for( int i = 0; i < kValidDataTypes+1; ++i )
     {
-        printf( "%3.3d ", datasetCounts[i] );
+        printf( "%s%3.3d ", outTabStr.c_str(), datasetCounts[i] );
         switch( i )
         {
         case 0: // Markerset
@@ -1652,10 +1674,10 @@ char* UnpackDescription( char* inptr, int nBytes, int major, int minor )
             printf( "Type: 4 device\n" );
             break;
         case 5: // camera
-            printf("Type: 5 camera\n");
+            printf("Type: 5 camera\n" );
             break;
         case 6: // asset
-            printf("Type: 6 asset\n");
+            printf("Type: 6 asset\n" );
             break;
         default:
             printf( "Type: %d UNKNOWN\n", i );
@@ -1675,19 +1697,21 @@ char* UnpackDescription( char* inptr, int nBytes, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int minor )
+char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
+
     // name
     char szName[MAX_NAMELENGTH];
     strcpy_s( szName, ptr );
     int nDataBytes = (int) strlen( szName ) + 1;
     ptr += nDataBytes;
     MakeAlnum( szName, MAX_NAMELENGTH );
-    printf( "Markerset Name: %s\n", szName );
+    printf( "%sMarkerset Name: %s\n", outTabStr.c_str(), szName );
 
     // marker data
     int nMarkers = 0; memcpy( &nMarkers, ptr, 4 ); ptr += 4;
-    printf( "Marker Count : %d\n", nMarkers );
+    printf( "%sMarker Count : %d\n", outTabStr.c_str(), nMarkers );
 
     for( int j = 0; j < nMarkers; j++ )
     {
@@ -1696,10 +1720,10 @@ char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int min
         int nDataBytes = (int) strlen( ptr ) + 1;
         ptr += nDataBytes;
         MakeAlnum( szName, MAX_NAMELENGTH );
-        printf( "  %3.1d Marker Name: %s\n", j, szName );
+        printf( "%s  %3.1d Marker Name: %s\n", outTabStr.c_str(), j, szName );
         if( ptr > targetPtr )
         {
-            printf( "UnpackMarkersetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+            printf( "%sUnpackMarkersetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
     }
@@ -1716,8 +1740,10 @@ char* UnpackMarkersetDescription( char* ptr, char* targetPtr, int major, int min
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int minor )
+char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
+
     char* ptr = inptr;
     int nBytes = 0; // common scratch variable
     if( ( major >= 2 ) || ( major == 0 ) )
@@ -1727,44 +1753,60 @@ char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int m
         strcpy_s( szName, ptr );
         ptr += strlen( ptr ) + 1;
         MakeAlnum( szName, MAX_NAMELENGTH );
-        printf( "  Rigid Body Name: %s\n", szName );
+        printf( "%sRigid Body Name: %s\n", outTabStr.c_str(), szName );
     }
 
     int ID = 0; memcpy( &ID, ptr, 4 ); ptr += 4;
-    printf( "  RigidBody ID   : %d\n", ID );
+    printf( "%sRigidBody ID   : %d\n", outTabStr.c_str(), ID );
 
     int parentID = 0; memcpy( &parentID, ptr, 4 ); ptr += 4;
-    printf( "  Parent ID      : %d\n", parentID );
+    printf( "%sParent ID      : %d\n", outTabStr.c_str(), parentID );
 
-    // Offsets
+    // Position Offsets
     float xoffset = 0; memcpy( &xoffset, ptr, 4 ); ptr += 4;
     float yoffset = 0; memcpy( &yoffset, ptr, 4 ); ptr += 4;
     float zoffset = 0; memcpy( &zoffset, ptr, 4 ); ptr += 4;
-    printf( "  Position       : %3.2f, %3.2f, %3.2f\n", xoffset, yoffset, zoffset );
+    printf( "%sPosition       : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), xoffset, yoffset, zoffset );
 
     if( ptr > targetPtr )
     {
-        printf( "UnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+        printf( "%sUnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
         return ptr;
+    }
+
+    if( major > 4 || ( major == 4 && minor >= 2 ) || major == 0 )
+    {
+        // Rotation Offsets
+        float qxoffset = 0; memcpy( &qxoffset, ptr, 4 ); ptr += 4;
+        float qyoffset = 0; memcpy( &qyoffset, ptr, 4 ); ptr += 4;
+        float qzoffset = 0; memcpy( &qzoffset, ptr, 4 ); ptr += 4;
+        float qwoffset = 0; memcpy( &qwoffset, ptr, 4 ); ptr += 4;
+        printf( "%sRotation       : [%3.2f, %3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), qxoffset, qyoffset, qzoffset, qwoffset );
+
+        if( ptr > targetPtr )
+        {
+            printf( "%sUnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
+            return ptr;
+        }
     }
 
     if( ( major >= 3 ) || ( major == 0 ) )
     {
         int nMarkers = 0; memcpy( &nMarkers, ptr, 4 ); ptr += 4;
-        printf( "  Number of Markers : %d\n", nMarkers );
+        printf( "%sNumber of Markers : %d\n", outTabStr.c_str(), nMarkers );
         if( nMarkers > 16000 )
         {
             int nBytesProcessed = (int) ( targetPtr - ptr );
-            printf( "UnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE at %d processed\n",
+            printf( "%sUnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE at %d processed\n", outTabStr.c_str(),
                 nBytesProcessed );
-            printf( "                           Unreasonable number of markers\n" );
+            printf( "%s  Unreasonable number of markers\n", outTabStr.c_str() );
             return targetPtr + 4;
         }
 
         if( nMarkers > 0 )
         {
 
-            printf( "  Marker Positions:\n" );
+            printf( "%sMarker Positions:\n", outTabStr.c_str() );
             char* ptr2 = ptr + ( nMarkers * sizeof( float ) * 3 );
             char* ptr3 = ptr2 + ( nMarkers * sizeof( int ) );
             for( int markerIdx = 0; markerIdx < nMarkers; ++markerIdx )
@@ -1789,11 +1831,12 @@ char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int m
                     ptr3 += strlen( ptr3 ) + 1;
                 }
 
-                printf( "    %3.1d Marker Label: %3.1d Position: %6.6f %6.6f %6.6f %s\n",
+                printf( "%s%3.1d Marker Label: %3.1d Position: [%3.2f %3.2f %3.2f] %s\n",
+                    outTabStr.c_str(),
                     markerIdx, label, xpos, ypos, zpos, szMarkerName );
                 if( ptr3 > targetPtr )
                 {
-                    printf( "UnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+                    printf( "%sUnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
                     return ptr3;
                 }
             }
@@ -1803,10 +1846,10 @@ char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int m
 
     if( ptr > targetPtr )
     {
-        printf( "UnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+        printf( "%sUnpackRigidBodyDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
         return ptr;
     }
-    printf( "UnpackRigidBodyDescription processed %lld bytes\n", ( (long long) ptr - (long long) inptr ) );
+    printf( "%s  UnpackRigidBodyDescription processed %lld bytes\n", outTabStr.c_str(), ( (long long) ptr - (long long) inptr ) );
     return ptr;
 }
 
@@ -1819,36 +1862,38 @@ char* UnpackRigidBodyDescription( char* inptr, char* targetPtr, int major, int m
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackSkeletonDescription( char* ptr, char* targetPtr, int major, int minor )
+char* UnpackSkeletonDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
+
     char szName[MAX_NAMELENGTH];
     // Name
     strcpy_s( szName, ptr );
     ptr += strlen( ptr ) + 1;
     MakeAlnum( szName, MAX_NAMELENGTH );
-    printf( "Name: %s\n", szName );
+    printf( "%sName: %s\n", outTabStr.c_str(), szName );
 
     // ID
     int ID = 0; memcpy( &ID, ptr, 4 ); ptr += 4;
-    printf( "ID : %d\n", ID );
+    printf( "%sID : %d\n", outTabStr.c_str(), ID );
 
     // # of RigidBodies
     int nRigidBodies = 0; memcpy( &nRigidBodies, ptr, 4 ); ptr += 4;
-    printf( "RigidBody (Bone) Count : %d\n", nRigidBodies );
+    printf( "%sRigidBody (Bone) Count : %d\n", outTabStr.c_str(), nRigidBodies );
 
     if( ptr > targetPtr )
     {
-        printf( "UnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+        printf( "%sUnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
         return ptr;
     }
 
     for( int i = 0; i < nRigidBodies; i++ )
     {
-        printf( "Rigid Body (Bone) %d:\n", i );
-        ptr = UnpackRigidBodyDescription( ptr, targetPtr, major, minor );
+        printf( "%sRigid Body (Bone) %d:\n", outTabStr.c_str(), i );
+        ptr = UnpackRigidBodyDescription( ptr, targetPtr, major, minor, level + 1 );
         if( ptr > targetPtr )
         {
-            printf( "UnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+            printf( "%sUnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
     }
@@ -1864,79 +1909,87 @@ char* UnpackSkeletonDescription( char* ptr, char* targetPtr, int major, int mino
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int minor )
+char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
+
     if( ( major >= 3 ) || ( major == 0 ) )
     {
         // ID
         int ID = 0; memcpy( &ID, ptr, 4 ); ptr += 4;
-        printf( "ID : %d\n", ID );
+        printf( "%sID : %d\n", outTabStr.c_str(), ID );
 
         // Serial Number
         char strSerialNo[128];
         strcpy_s( strSerialNo, ptr );
         ptr += strlen( ptr ) + 1;
-        printf( "Serial Number : %s\n", strSerialNo );
+        printf( "%sSerial Number : %s\n", outTabStr.c_str(), strSerialNo );
 
         // Dimensions
         float fWidth = 0; memcpy( &fWidth, ptr, 4 ); ptr += 4;
-        printf( "Width : %3.2f\n", fWidth );
+        printf( "%sWidth : %3.2f\n", outTabStr.c_str(), fWidth );
 
         float fLength = 0; memcpy( &fLength, ptr, 4 ); ptr += 4;
-        printf( "Length : %3.2f\n", fLength );
+        printf( "%sLength : %3.2f\n", outTabStr.c_str(), fLength );
 
         // Origin
         float fOriginX = 0; memcpy( &fOriginX, ptr, 4 ); ptr += 4;
         float fOriginY = 0; memcpy( &fOriginY, ptr, 4 ); ptr += 4;
         float fOriginZ = 0; memcpy( &fOriginZ, ptr, 4 ); ptr += 4;
-        printf( "Origin : %3.2f,  %3.2f,  %3.2f\n", fOriginX, fOriginY, fOriginZ );
+        printf( "%sOrigin : [%3.2f,  %3.2f,  %3.2f]\n", outTabStr.c_str(), fOriginX, fOriginY, fOriginZ );
 
         // Calibration Matrix
         const int kCalMatX = 12;
         const int kCalMatY = 12;
         float fCalMat[kCalMatX][kCalMatY];
-        printf( "Cal Matrix\n" );
+        printf( "%sCal Matrix:\n", outTabStr.c_str() );
+        int rowCount = 0;
         for( auto& calMatX : fCalMat )
         {
-            printf( "  " );
+            printf( "%s  ", outTabStr.c_str() );
+            printf( "%3.1d ", rowCount );
             for( float& calMatY : calMatX )
             {
                 memcpy( &calMatY, ptr, 4 ); ptr += 4;
                 printf( "%3.3e ", calMatY );
             }
             printf( "\n" );
+            ++rowCount;
         }
 
         // Corners
         const int kCornerX = 4;
         const int kCornerY = 3;
         float fCorners[kCornerX][kCornerY] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
-        printf( "Corners\n" );
+        rowCount = 0;
+        printf( "%sCorners:\n", outTabStr.c_str() );
         for( auto& fCorner : fCorners )
         {
-            printf( "  " );
+            printf( "%s  ", outTabStr.c_str() );
+            printf( "%3.1d ", rowCount );
             for( float& cornerY : fCorner )
             {
                 memcpy( &cornerY, ptr, 4 ); ptr += 4;
                 printf( "%3.3e ", cornerY );
             }
             printf( "\n" );
+            ++rowCount;
         }
 
         // Plate Type
         int iPlateType = 0; memcpy( &iPlateType, ptr, 4 ); ptr += 4;
-        printf( "Plate Type : %d\n", iPlateType );
+        printf( "%sPlate Type : %d\n", outTabStr.c_str(), iPlateType );
 
         // Channel Data Type
         int iChannelDataType = 0; memcpy( &iChannelDataType, ptr, 4 ); ptr += 4;
-        printf( "Channel Data Type : %d\n", iChannelDataType );
+        printf( "%sChannel Data Type : %d\n", outTabStr.c_str(), iChannelDataType );
 
         // Number of Channels
         int nChannels = 0; memcpy( &nChannels, ptr, 4 ); ptr += 4;
-        printf( "  Number of Channels : %d\n", nChannels );
+        printf( "%sNumber of Channels : %d\n", outTabStr.c_str(), nChannels );
         if( ptr > targetPtr )
         {
-            printf( "UnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+            printf( "%sUnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
 
@@ -1946,10 +1999,10 @@ char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int mi
             strcpy_s( szName, ptr );
             int nDataBytes = (int) strlen( szName ) + 1;
             ptr += nDataBytes;
-            printf( "    Channel Name %d: %s\n", chNum, szName );
+            printf( "%sChannel Name %d: %s\n", outTabStr.c_str(), chNum, szName );
             if( ptr > targetPtr )
             {
-                printf( "UnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+                printf( "%sUnpackSkeletonDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
                 return ptr;
             }
         }
@@ -1966,38 +2019,39 @@ char* UnpackForcePlateDescription( char* ptr, char* targetPtr, int major, int mi
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor )
+char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     if( ( major >= 3 ) || ( major == 0 ) )
     {
         int ID = 0; memcpy( &ID, ptr, 4 ); ptr += 4;
-        printf( "ID : %d\n", ID );
+        printf( "%sID                 : %d\n", outTabStr.c_str(), ID );
 
         // Name
         char strName[128];
         strcpy_s( strName, ptr );
         ptr += strlen( ptr ) + 1;
-        printf( "Device Name :       %s\n", strName );
+        printf( "%sName               : %s\n", outTabStr.c_str(), strName );
 
         // Serial Number
         char strSerialNo[128];
         strcpy_s( strSerialNo, ptr );
         ptr += strlen( ptr ) + 1;
-        printf( "Serial Number :     %s\n", strSerialNo );
+        printf( "%sSerial Number      : %s\n", outTabStr.c_str(), strSerialNo );
 
         int iDeviceType = 0; memcpy( &iDeviceType, ptr, 4 ); ptr += 4;
-        printf( "Device Type :        %d\n", iDeviceType );
+        printf( "%sDevice Type        : %d\n", outTabStr.c_str(), iDeviceType );
 
         int iChannelDataType = 0; memcpy( &iChannelDataType, ptr, 4 ); ptr += 4;
-        printf( "Channel Data Type : %d\n", iChannelDataType );
+        printf( "%sChannel Data Type  : %d\n", outTabStr.c_str(), iChannelDataType );
 
         int nChannels = 0; memcpy( &nChannels, ptr, 4 ); ptr += 4;
-        printf( "Number of Channels : %d\n", nChannels );
+        printf( "%sNumber of Channels : %d\n", outTabStr.c_str(), nChannels );
         char szChannelName[MAX_NAMELENGTH];
 
         if( ptr > targetPtr )
         {
-            printf( "UnpackDeviceDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+            printf( "%sUnpackDeviceDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
 
@@ -2005,10 +2059,10 @@ char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor 
         {
             strcpy_s( szChannelName, ptr );
             ptr += strlen( ptr ) + 1;
-            printf( "  Channel Name %d:     %s\n", chNum, szChannelName );
+            printf( "%s  Channel %d Name  : %s\n", outTabStr.c_str(), chNum, szChannelName );
             if( ptr > targetPtr )
             {
-                printf( "UnpackDeviceDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n" );
+                printf( "%sUnpackDeviceDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
                 return ptr;
             }
         }
@@ -2025,22 +2079,23 @@ char* UnpackDeviceDescription( char* ptr, char* targetPtr, int major, int minor 
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackCameraDescription( char* ptr, char* targetPtr, int major, int minor )
+char* UnpackCameraDescription( char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
-
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Name
     char szName[MAX_NAMELENGTH];
     strcpy_s( szName, ptr );
     ptr += strlen( ptr ) + 1;
     MakeAlnum( szName, MAX_NAMELENGTH );
-    printf( "Camera Name  : %s\n", szName );
+    printf( "%sName  : %s\n", outTabStr.c_str(), szName );
 
     // Pos
     float cameraPosition[3];
     memcpy( cameraPosition + 0, ptr, 4 ); ptr += 4;
     memcpy( cameraPosition + 1, ptr, 4 ); ptr += 4;
     memcpy( cameraPosition + 2, ptr, 4 ); ptr += 4;
-    printf( "  Position   : %3.2f, %3.2f, %3.2f\n",
+    printf( "%s  Position   : [%3.2f, %3.2f, %3.2f]\n",
+        outTabStr.c_str(),
         cameraPosition[0], cameraPosition[1],
         cameraPosition[2] );
 
@@ -2050,7 +2105,7 @@ char* UnpackCameraDescription( char* ptr, char* targetPtr, int major, int minor 
     memcpy( cameraOriQuat + 1, ptr, 4 ); ptr += 4;
     memcpy( cameraOriQuat + 2, ptr, 4 ); ptr += 4;
     memcpy( cameraOriQuat + 3, ptr, 4 ); ptr += 4;
-    printf( "  Orientation: %3.2f, %3.2f, %3.2f, %3.2f\n",
+    printf( "%s  Orientation: [%3.2f, %3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(),
         cameraOriQuat[0], cameraOriQuat[1],
         cameraOriQuat[2], cameraOriQuat[3] );
 
@@ -2065,36 +2120,37 @@ char* UnpackCameraDescription( char* ptr, char* targetPtr, int major, int minor 
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackMarkerDescription(char* ptr, char* targetPtr, int major, int minor)
+char* UnpackMarkerDescription(char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Name
     char szName[MAX_NAMELENGTH];
     strcpy_s(szName, ptr);
     ptr += strlen(ptr) + 1;
     MakeAlnum(szName, MAX_NAMELENGTH);
-    printf("Marker Name : %s\n", szName);
+    printf("%sName : %s\n", outTabStr.c_str(), szName);
 
     // ID
     int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
-    printf("ID : %d\n", ID);
+    printf("%sID : %d\n", outTabStr.c_str(), ID);
 
     // initial position
     float pos[3];
     memcpy(pos + 0, ptr, 4); ptr += 4;
     memcpy(pos + 1, ptr, 4); ptr += 4;
     memcpy(pos + 2, ptr, 4); ptr += 4;
-    printf("  Initial Position   : %3.2f, %3.2f, %3.2f\n",
+    printf("%sPosition   : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(),
         pos[0], pos[1], pos[2]);
 
     // size
     float size = 0;
     memcpy(&size, ptr, 4); ptr += 4;
-    printf("size : %.2f\n", size);
+    printf("%sSize : %.2f\n", outTabStr.c_str(), size);
 
     // params
     int16_t params = 0;
     memcpy(&params, ptr, 2); ptr += 2;
-    printf("params : %d\n", params);
+    printf("%sParams : %d\n", outTabStr.c_str(), params);
 
     return ptr;
 }
@@ -2107,54 +2163,55 @@ char* UnpackMarkerDescription(char* ptr, char* targetPtr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackAssetDescription(char* ptr, char* targetPtr, int major, int minor)
+char* UnpackAssetDescription(char* ptr, char* targetPtr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     char szName[MAX_NAMELENGTH];
     // Name
     strcpy_s(szName, ptr);
     ptr += strlen(ptr) + 1;
     MakeAlnum(szName, MAX_NAMELENGTH);
-    printf("Name: %s\n", szName);
+    printf("%sName       : %s\n",outTabStr.c_str(), szName);
 
     // asset type
     int type = 0; memcpy(&type, ptr, 4); ptr += 4;
-    printf("type : %d\n", type);
+    printf("%sType       : %d\n", outTabStr.c_str(), type);
 
     // ID
     int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
-    printf("ID : %d\n", ID);
+    printf("%sID         : %d\n", outTabStr.c_str(), ID);
 
     // # of RigidBodies
     int nRigidBodies = 0; memcpy(&nRigidBodies, ptr, 4); ptr += 4;
-    printf("RigidBody (Bone) Count : %d\n", nRigidBodies);
+    printf("%sRigidBody (Bone) Count : %d\n", outTabStr.c_str(), nRigidBodies);
 
     if (ptr > targetPtr)
     {
-        printf("UnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n");
+        printf("%sUnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
         return ptr;
     }
 
     for (int i = 0; i < nRigidBodies; i++)
     {
-        printf("Rigid Body (Bone) %d:\n", i);
-        ptr = UnpackRigidBodyDescription(ptr, targetPtr, major, minor);
+        printf("%sRigid Body (Bone) %d:\n", outTabStr.c_str(), i);
+        ptr = UnpackRigidBodyDescription(ptr, targetPtr, major, minor, level + 1);
         if (ptr > targetPtr)
         {
-            printf("UnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n");
+            printf("%sUnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
     }
 
     // # of Markers
     int nMarkers = 0; memcpy(&nMarkers, ptr, 4); ptr += 4;
-    printf("Marker Count : %d\n", nMarkers);
+    printf("%sMarker Count : %d\n", outTabStr.c_str(), nMarkers);
     for (int i = 0; i < nMarkers; i++)
     {
-        printf("Marker %d:\n", i);
-        ptr = UnpackMarkerDescription(ptr, targetPtr, major, minor);
+        printf("%sMarker %d:\n", outTabStr.c_str(), i);
+        ptr = UnpackMarkerDescription(ptr, targetPtr, major, minor, level + 1);
         if (ptr > targetPtr)
         {
-            printf("UnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n");
+            printf("%sUnpackAssetDescription: UNPACK ERROR DETECTED: STOPPING DECODE\n", outTabStr.c_str() );
             return ptr;
         }
     }
@@ -2170,32 +2227,32 @@ char* UnpackAssetDescription(char* ptr, char* targetPtr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackFrameData( char* inptr, int nBytes, int major, int minor )
+char* UnpackFrameData( char* inptr, int nBytes, int major, int minor, unsigned int level )
 {
     char* ptr = inptr;
-    ptr = UnpackFramePrefixData( ptr, major, minor );
+    ptr = UnpackFramePrefixData( ptr, major, minor, level );
 
-    ptr = UnpackMarkersetData( ptr, major, minor );
+    ptr = UnpackMarkersetData( ptr, major, minor, level );
 
-    ptr = UnpackLegacyOtherMarkers( ptr, major, minor );
+    ptr = UnpackLegacyOtherMarkers( ptr, major, minor, level );
 
-    ptr = UnpackRigidBodyData( ptr, major, minor );
+    ptr = UnpackRigidBodyData( ptr, major, minor, level );
 
-    ptr = UnpackSkeletonData( ptr, major, minor );
+    ptr = UnpackSkeletonData( ptr, major, minor, level );
 
     // Assets ( Motive 3.1 / NatNet 4.1 and greater)
     if (((major == 4) && (minor > 0)) || (major > 4))
     {
-        ptr = UnpackAssetData(ptr, major, minor);
+        ptr = UnpackAssetData(ptr, major, minor, level );
     }
 
-    ptr = UnpackLabeledMarkerData( ptr, major, minor );
+    ptr = UnpackLabeledMarkerData( ptr, major, minor, level );
 
-    ptr = UnpackForcePlateData( ptr, major, minor );
+    ptr = UnpackForcePlateData( ptr, major, minor, level );
 
-    ptr = UnpackDeviceData( ptr, major, minor );
+    ptr = UnpackDeviceData( ptr, major, minor, level );
 
-    ptr = UnpackFrameSuffixData( ptr, major, minor );
+    ptr = UnpackFrameSuffixData( ptr, major, minor, level );
 
     return ptr;
 }
@@ -2207,11 +2264,12 @@ char* UnpackFrameData( char* inptr, int nBytes, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackFramePrefixData( char* ptr, int major, int minor )
+char* UnpackFramePrefixData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Next 4 Bytes is the frame number
     int frameNumber = 0; memcpy( &frameNumber, ptr, 4 ); ptr += 4;
-    printf( "Frame #: %3.1d\n", frameNumber );
+    printf( "%sFrame #: %3.1d\n", outTabStr.c_str(), frameNumber );
     return ptr;
 }
 
@@ -2222,20 +2280,21 @@ char* UnpackFramePrefixData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackLegacyOtherMarkers(char* ptr, int major, int minor)
+char* UnpackLegacyOtherMarkers(char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // First 4 Bytes is the number of Other markers
     int nOtherMarkers = 0; memcpy(&nOtherMarkers, ptr, 4); ptr += 4;
-    printf("Other Marker Count : %3.1d\n", nOtherMarkers);
+    printf("%sUnlabeled Marker Count : %3.1d\n", outTabStr.c_str(), nOtherMarkers);
     int nBytes;
-    ptr = UnpackDataSize(ptr, major, minor,nBytes);
+    ptr = UnpackDataSize(ptr, major, minor,nBytes,level+1);
 
     for (int j = 0; j < nOtherMarkers; j++)
     {
         float x = 0.0f; memcpy(&x, ptr, 4); ptr += 4;
         float y = 0.0f; memcpy(&y, ptr, 4); ptr += 4;
         float z = 0.0f; memcpy(&z, ptr, 4); ptr += 4;
-        printf("  Marker %3.1d : [x=%3.2f,y=%3.2f,z=%3.2f]\n", j, x, y, z);
+        printf("%s  Marker %3.1d pos : [x=%3.2f,y=%3.2f,z=%3.2f]\n", outTabStr.c_str(), j, x, y, z);
     }
 
     return ptr;
@@ -2248,14 +2307,15 @@ char* UnpackLegacyOtherMarkers(char* ptr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackMarkersetData( char* ptr, int major, int minor )
+char* UnpackMarkersetData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // First 4 Bytes is the number of data sets (markersets, rigidbodies, etc)
     int nMarkerSets = 0; memcpy( &nMarkerSets, ptr, 4 ); ptr += 4;
-    printf( "Marker Set Count : %3.1d\n", nMarkerSets );
+    printf( "%sMarkerset Count : %3.1d\n", outTabStr.c_str(), nMarkerSets );
 
     int nBytes=0;
-    ptr = UnpackDataSize(ptr, major, minor,nBytes);
+    ptr = UnpackDataSize(ptr, major, minor,nBytes, level+1);
 
     // Loop through number of marker sets and get name and data
     for( int i = 0; i < nMarkerSets; i++ )
@@ -2266,18 +2326,19 @@ char* UnpackMarkersetData( char* ptr, int major, int minor )
         int nDataBytes = (int) strlen( szName ) + 1;
         ptr += nDataBytes;
         MakeAlnum( szName, MAX_NAMELENGTH );
-        printf( "Model Name       : %s\n", szName );
+        printf( "%sMarkerData:\n", outTabStr.c_str() );
+        printf( "%sModel Name       : %s\n", outTabStr.c_str(), szName );
 
         // marker data
         int nMarkers = 0; memcpy( &nMarkers, ptr, 4 ); ptr += 4;
-        printf( "Marker Count     : %3.1d\n", nMarkers );
+        printf( "%sMarker Count     : %3.1d\n", outTabStr.c_str(), nMarkers );
 
         for( int j = 0; j < nMarkers; j++ )
         {
             float x = 0; memcpy( &x, ptr, 4 ); ptr += 4;
             float y = 0; memcpy( &y, ptr, 4 ); ptr += 4;
             float z = 0; memcpy( &z, ptr, 4 ); ptr += 4;
-            printf( "  Marker %3.1d : [x=%3.2f,y=%3.2f,z=%3.2f]\n", j, x, y, z );
+            printf( "%s  Marker %3.1d pos : [x=%3.2f,y=%3.2f,z=%3.2f]\n", outTabStr.c_str(), j, x, y, z );
         }
     }
 
@@ -2292,15 +2353,16 @@ char* UnpackMarkersetData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackRigidBodyData( char* ptr, int major, int minor )
+char* UnpackRigidBodyData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Loop through rigidbodies
     int nRigidBodies = 0;
     memcpy( &nRigidBodies, ptr, 4 ); ptr += 4;
-    printf( "Rigid Body Count : %3.1d\n", nRigidBodies );
+    printf( "%sRigid Body Count : %3.1d\n", outTabStr.c_str(), nRigidBodies );
 
     int nBytes=0;
-    ptr = UnpackDataSize(ptr, major, minor,nBytes);
+    ptr = UnpackDataSize(ptr, major, minor,nBytes, level + 1);
 
     for( int j = 0; j < nRigidBodies; j++ )
     {
@@ -2313,16 +2375,17 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
         float qy = 0; memcpy( &qy, ptr, 4 ); ptr += 4;
         float qz = 0; memcpy( &qz, ptr, 4 ); ptr += 4;
         float qw = 0; memcpy( &qw, ptr, 4 ); ptr += 4;
-        printf( "  RB: %3.1d ID : %3.1d\n", j, ID );
-        printf( "    Position    : [%3.2f, %3.2f, %3.2f]\n", x, y, z );
-        printf( "    Orientation : [%3.2f, %3.2f, %3.2f, %3.2f]\n", qx, qy, qz, qw );
+        printf( "%s  Rigid Body      : %3.1d\n", outTabStr.c_str(), j );
+        printf( "%s    ID            : %3.1d\n", outTabStr.c_str(), ID );
+        printf( "%s    Position      : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), x, y, z );
+        printf( "%s    Orientation   : [%3.2f, %3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), qx, qy, qz, qw );
 
         // Marker positions removed as redundant (since they can be derived from RB Pos/Ori plus initial offset) in NatNet 3.0 and later to optimize packet size
         if( major < 3 )
         {
             // Associated marker positions
             int nRigidMarkers = 0;  memcpy( &nRigidMarkers, ptr, 4 ); ptr += 4;
-            printf( "Marker Count: %d\n", nRigidMarkers );
+            printf( "%sMarker Count: %d\n", outTabStr.c_str(), nRigidMarkers );
             int nBytes = nRigidMarkers * 3 * sizeof( float );
             float* markerData = (float*) malloc( nBytes );
             memcpy( markerData, ptr, nBytes );
@@ -2345,7 +2408,7 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
 
                 for( int k = 0; k < nRigidMarkers; k++ )
                 {
-                    printf( "  Marker %d: id=%d  size=%3.1f  pos=[%3.2f, %3.2f, %3.2f]\n",
+                    printf( "%s  Marker %d: id=%d  size=%3.1f  pos=[%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(),
                         k, markerIDs[k], markerSizes[k],
                         markerData[k * 3], markerData[k * 3 + 1], markerData[k * 3 + 2] );
                 }
@@ -2363,7 +2426,7 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
                 for( int k = 0; k < nRigidMarkers; k++ )
                 {
                     k3 = k * 3;
-                    printf( "  Marker %d: pos = [%3.2f, %3.2f, %3.2f]\n",
+                    printf( "%s  Marker %d: pos : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(),
                         k, markerData[k3], markerData[k3 + 1], markerData[k3 + 2] );
                 }
             }
@@ -2377,7 +2440,7 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
         {
             // Mean marker error
             float fError = 0.0f; memcpy( &fError, ptr, 4 ); ptr += 4;
-            printf( "\tMean Marker Error: %3.2f\n", fError );
+            printf( "%s  Marker Error: %3.2f\n", outTabStr.c_str(), fError );
         }
 
         // NatNet version 2.6 and later
@@ -2386,7 +2449,7 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
             // params
             short params = 0; memcpy( &params, ptr, 2 ); ptr += 2;
             bool bTrackingValid = params & 0x01; // 0x01 : rigid body was successfully tracked in this frame
-            printf( "\tTracking Valid: %s\n", ( bTrackingValid ) ? "True" : "False" );
+            printf( "%s  Tracking Valid: %s\n", outTabStr.c_str(), ( bTrackingValid ) ? "True" : "False" );
         }
 
     } // Go to next rigid body
@@ -2403,17 +2466,18 @@ char* UnpackRigidBodyData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackSkeletonData( char* ptr, int major, int minor )
+char* UnpackSkeletonData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Skeletons (NatNet version 2.1 and later)
     if( ( ( major == 2 ) && ( minor > 0 ) ) || ( major > 2 ) )
     {
         int nSkeletons = 0;
         memcpy( &nSkeletons, ptr, 4 ); ptr += 4;
-        printf( "Skeleton Count : %d\n", nSkeletons );
+        printf( "%sSkeleton Count : %d\n", outTabStr.c_str(), nSkeletons );
 
         int nBytes=0;
-        ptr = UnpackDataSize(ptr, major, minor,nBytes);
+        ptr = UnpackDataSize(ptr, major, minor,nBytes, level);
 
         // Loop through skeletons
         for( int j = 0; j < nSkeletons; j++ )
@@ -2421,12 +2485,13 @@ char* UnpackSkeletonData( char* ptr, int major, int minor )
             // skeleton id
             int skeletonID = 0;
             memcpy( &skeletonID, ptr, 4 ); ptr += 4;
-            printf( "  Skeleton %d ID=%d : BEGIN\n", j, skeletonID );
+            printf( "%s  Skeleton %3.1d\n", outTabStr.c_str(), j );
+            printf( "%s    ID: %3.1d\n", outTabStr.c_str(), skeletonID );
 
             // Number of rigid bodies (bones) in skeleton
             int nRigidBodies = 0;
             memcpy( &nRigidBodies, ptr, 4 ); ptr += 4;
-            printf( "  Rigid Body Count : %d\n", nRigidBodies );
+            printf( "%s  Rigid Body Count : %d\n", outTabStr.c_str(), nRigidBodies );
 
             // Loop through rigid bodies (bones) in skeleton
             for( int k = 0; k < nRigidBodies; k++ )
@@ -2440,15 +2505,16 @@ char* UnpackSkeletonData( char* ptr, int major, int minor )
                 float qy = 0; memcpy( &qy, ptr, 4 ); ptr += 4;
                 float qz = 0; memcpy( &qz, ptr, 4 ); ptr += 4;
                 float qw = 0; memcpy( &qw, ptr, 4 ); ptr += 4;
-                printf( "    RB: %3.1d ID : %3.1d\n", k, ID );
-                printf( "      Position   : [%3.2f, %3.2f, %3.2f]\n", x, y, z );
-                printf( "      Orientation: [%3.2f, %3.2f, %3.2f, %3.2f]\n", qx, qy, qz, qw );
+                printf( "%s    Rigid Body      : %3.1d\n", outTabStr.c_str(), k );
+                printf( "%s      ID            : %3.1d\n", outTabStr.c_str(), ID );
+                printf( "%s      Position      : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), x, y, z );
+                printf( "%s      Orientation   : [%3.2f, %3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), qx, qy, qz, qw );
 
                 // Mean marker error (NatNet version 2.0 and later)
                 if( major >= 2 )
                 {
                     float fError = 0.0f; memcpy( &fError, ptr, 4 ); ptr += 4;
-                    printf( "    Mean Marker Error: %3.2f\n", fError );
+                    printf( "%s      Marker Error  : %3.2f\n", outTabStr.c_str(), fError );
                 }
 
                 // Tracking flags (NatNet version 2.6 and later)
@@ -2457,9 +2523,10 @@ char* UnpackSkeletonData( char* ptr, int major, int minor )
                     // params
                     short params = 0; memcpy( &params, ptr, 2 ); ptr += 2;
                     bool bTrackingValid = params & 0x01; // 0x01 : rigid body was successfully tracked in this frame
+                    printf( "%s      Tracking Valid: %s\n", outTabStr.c_str(), (bTrackingValid)?"True":"False");
                 }
             } // next rigid body
-            printf( "  Skeleton %d ID=%d : END\n", j, skeletonID );
+            //printf( "%s  Skeleton %d ID=%d : END\n", outTabStr.c_str(), j, skeletonID );
 
         } // next skeleton
     }
@@ -2474,45 +2541,48 @@ char* UnpackSkeletonData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackAssetData(char* ptr, int major, int minor)
+char* UnpackAssetData(char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Assets ( Motive 3.1 / NatNet 4.1 and greater)
     if (((major == 4) && (minor > 0)) || (major > 4))
     {
         int nAssets = 0;
         memcpy(&nAssets, ptr, 4); ptr += 4;
-        printf("Asset Count : %d\n", nAssets);
+        printf("%sAsset Count : %d\n", outTabStr.c_str(), nAssets);
 
         int nBytes=0;
-        ptr = UnpackDataSize(ptr, major, minor,nBytes);
+        ptr = UnpackDataSize(ptr, major, minor,nBytes, level);
 
         for (int i = 0; i < nAssets; i++)
         {
             // asset id
             int assetID = 0;
             memcpy(&assetID, ptr, 4); ptr += 4;
-            printf("Asset ID: %d\n", assetID);
+            printf("%sAsset ID: %d\n", outTabStr.c_str(), assetID);
 
             // # of Rigid Bodies
             int nRigidBodies = 0;
             memcpy(&nRigidBodies, ptr, 4); ptr += 4;
-            printf("Rigid Bodies ( %d )\n", nRigidBodies);
+            printf("%sRigid Body Count: %3.1d\n", outTabStr.c_str(), nRigidBodies);
 
             // Rigid Body data
             for (int j = 0; j < nRigidBodies; j++)
             {
-                ptr = UnpackAssetRigidBodyData(ptr, major, minor);
+                printf( "%s  Rigid Body : %d\n", outTabStr.c_str(), j );
+                ptr = UnpackAssetRigidBodyData(ptr, major, minor, level);
             }
 
             // # of Markers
             int nMarkers = 0;
             memcpy(&nMarkers, ptr, 4); ptr += 4;
-            printf("Markers ( %d )\n", nMarkers);
+            printf("%sMarker Count: %3.1d\n", outTabStr.c_str(), nMarkers);
 
             // Marker data
             for (int j = 0; j < nMarkers; j++)
             {
-                ptr = UnpackAssetMarkerData(ptr, major, minor);
+                printf( "%s%3.1d ", outTabStr.c_str(), j );
+                ptr = UnpackAssetMarkerData(ptr, major, minor, 0);
             }
         }
     }
@@ -2527,8 +2597,9 @@ char* UnpackAssetData(char* ptr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackAssetRigidBodyData(char* ptr, int major, int minor)
+char* UnpackAssetRigidBodyData(char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Rigid body position and orientation 
     int ID = 0; memcpy(&ID, ptr, 4); ptr += 4;
     float x = 0.0f; memcpy(&x, ptr, 4); ptr += 4;
@@ -2538,17 +2609,17 @@ char* UnpackAssetRigidBodyData(char* ptr, int major, int minor)
     float qy = 0; memcpy(&qy, ptr, 4); ptr += 4;
     float qz = 0; memcpy(&qz, ptr, 4); ptr += 4;
     float qw = 0; memcpy(&qw, ptr, 4); ptr += 4;
-    printf("  RB ID : %d\n", ID);
-    printf("    Position    : [%3.2f, %3.2f, %3.2f]\n", x, y, z);
-    printf("    Orientation : [%3.2f, %3.2f, %3.2f, %3.2f]\n", qx, qy, qz, qw);
+    printf( "%s    ID : %d\n", outTabStr.c_str(), ID );
+    printf( "%s    Position    : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), x, y, z );
+    printf( "%s    Orientation : [%3.2f, %3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), qx, qy, qz, qw );
 
     // Mean error
     float fError = 0.0f; memcpy(&fError, ptr, 4); ptr += 4;
-    printf("    Mean err: %3.2f\n", fError);
+    printf("%s    Mean Error: %3.2f\n", outTabStr.c_str(), fError);
 
     // params
     short params = 0; memcpy(&params, ptr, 2); ptr += 2;
-    printf("    params : %d\n", params);
+    printf("%s    Params : %d\n", outTabStr.c_str(), params);
 
     return ptr;
 }
@@ -2560,8 +2631,9 @@ char* UnpackAssetRigidBodyData(char* ptr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackAssetMarkerData(char* ptr, int major, int minor)
+char* UnpackAssetMarkerData(char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // ID
     int ID = 0;
     memcpy(&ID, ptr, 4); ptr += 4;
@@ -2590,7 +2662,7 @@ char* UnpackAssetMarkerData(char* ptr, int major, int minor)
     float residual = 0.0f;
     memcpy(&residual, ptr, 4); ptr += 4;
 
-    printf("  Marker %d\t(pos=(%3.2f, %3.2f, %3.2f)\tsize=%3.2f\terr=%3.2f\tparams=%d\n",
+    printf("%s  Marker %d\tpos : [%3.2f, %3.2f, %3.2f]\tsize=%3.2f\terr=%3.2f\tparams=%d\n", outTabStr.c_str(),
                 ID, x, y, z, size, residual, params);
 
     return ptr;
@@ -2603,18 +2675,19 @@ char* UnpackAssetMarkerData(char* ptr, int major, int minor)
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackLabeledMarkerData( char* ptr, int major, int minor )
+char* UnpackLabeledMarkerData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // labeled markers (NatNet version 2.3 and later)
-// labeled markers - this includes all markers: Active, Passive, and 'unlabeled' (markers with no asset but a PointCloud ID)
+    // labeled markers - this includes all markers: Active, Passive, and 'unlabeled' (markers with no asset but a PointCloud ID)
     if( ( ( major == 2 ) && ( minor >= 3 ) ) || ( major > 2 ) )
     {
         int nLabeledMarkers = 0;
         memcpy( &nLabeledMarkers, ptr, 4 ); ptr += 4;
-        printf( "Labeled Marker Count : %d\n", nLabeledMarkers );
+        printf( "%sLabeled Marker Count : %d\n", outTabStr.c_str(), nLabeledMarkers );
 
         int nBytes=0;
-        ptr = UnpackDataSize(ptr, major, minor,nBytes);
+        ptr = UnpackDataSize(ptr, major, minor,nBytes, level);
 
         // Loop through labeled markers
         for( int j = 0; j < nLabeledMarkers; j++ )
@@ -2631,7 +2704,7 @@ char* UnpackLabeledMarkerData( char* ptr, int major, int minor )
             //      PointCloud ID
             int ID = 0; memcpy( &ID, ptr, 4 ); ptr += 4;
             int modelID, markerID;
-            DecodeMarkerID( ID, &modelID, &markerID );
+            DecodeMarkerID( ID, modelID, markerID );
 
 
             // x
@@ -2644,18 +2717,25 @@ char* UnpackLabeledMarkerData( char* ptr, int major, int minor )
             float size = 0.0f; memcpy( &size, ptr, 4 ); ptr += 4;
 
             // NatNet version 2.6 and later
+            short params = 0;
+            bool bOccluded = false;     // marker was not visible (occluded) in this frame
+            bool bPCSolved = false;     // position provided by point cloud solve
+            bool bModelSolved = false;  // position provided by model solve
+            bool bHasModel = false;     // marker has an associated asset in the data stream
+            bool bUnlabeled = false;    // marker is 'unlabeled', but has a point cloud ID
+            bool bActiveMarker = false; // marker is an actively labeled LED marker
             if( ( ( major == 2 ) && ( minor >= 6 ) ) || ( major > 2 ) || ( major == 0 ) )
             {
                 // marker params
-                short params = 0; memcpy( &params, ptr, 2 ); ptr += 2;
-                bool bOccluded = ( params & 0x01 ) != 0;     // marker was not visible (occluded) in this frame
-                bool bPCSolved = ( params & 0x02 ) != 0;     // position provided by point cloud solve
-                bool bModelSolved = ( params & 0x04 ) != 0;  // position provided by model solve
+                params = 0; memcpy( &params, ptr, 2 ); ptr += 2;
+                bOccluded = ( params & 0x01 ) != 0;     // marker was not visible (occluded) in this frame
+                bPCSolved = ( params & 0x02 ) != 0;     // position provided by point cloud solve
+                bModelSolved = ( params & 0x04 ) != 0;  // position provided by model solve
                 if( ( major >= 3 ) || ( major == 0 ) )
                 {
-                    bool bHasModel = ( params & 0x08 ) != 0;     // marker has an associated asset in the data stream
-                    bool bUnlabeled = ( params & 0x10 ) != 0;    // marker is 'unlabeled', but has a point cloud ID
-                    bool bActiveMarker = ( params & 0x20 ) != 0; // marker is an actively labeled LED marker
+                    bHasModel = ( params & 0x08 ) != 0;     // marker has an associated asset in the data stream
+                    bUnlabeled = ( params & 0x10 ) != 0;    // marker is 'unlabeled', but has a point cloud ID
+                    bActiveMarker = ( params & 0x20 ) != 0; // marker is an actively labeled LED marker
                 }
 
             }
@@ -2669,10 +2749,14 @@ char* UnpackLabeledMarkerData( char* ptr, int major, int minor )
                 residual *= 1000.0;
             }
 
-            printf( "%3.1d ID  : [MarkerID: %d] [ModelID: %d]\n", j, markerID, modelID );
-            printf( "    pos : [%3.2f, %3.2f, %3.2f]\n", x, y, z );
-            printf( "    size: [%3.2f]\n", size );
-            printf( "    err:  [%3.2f]\n", residual );
+            printf( "%sLabeled Marker %3.1d:\n", outTabStr.c_str(), j);
+            printf( "%s    ID                 : [MarkerID: %d] [ModelID: %d]\n", outTabStr.c_str(), markerID, modelID );
+            printf( "%s    pos                : [%3.2f, %3.2f, %3.2f]\n", outTabStr.c_str(), x, y, z );
+            printf( "%s    size               : [%3.2f]\n", outTabStr.c_str(), size );
+            printf( "%s    err                : [%3.2f]\n", outTabStr.c_str(), residual );
+            printf( "%s    occluded           : [%3.1d]\n", outTabStr.c_str(), bOccluded );
+            printf( "%s    point_cloud_solved : [%3.1d]\n", outTabStr.c_str(), bPCSolved);
+            printf( "%s    model_solved       : [%3.1d]\n", outTabStr.c_str(), bModelSolved );
         }
     }
     return ptr;
@@ -2686,15 +2770,16 @@ char* UnpackLabeledMarkerData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackDataSize(char* ptr, int major, int minor, int& nBytes, bool skip /*= false*/ )
+char* UnpackDataSize(char* ptr, int major, int minor, int& nBytes, unsigned int level, bool skip /*= false*/ )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     nBytes = 0;
 
     // size of all data for this data type (in bytes);
     if (((major == 4) && (minor > 0)) || (major > 4))
     {
         memcpy(&nBytes, ptr, 4); ptr += 4;
-        printf("Byte Count: %d\n", nBytes);
+        printf("%sByte Count: %d\n", outTabStr.c_str(), nBytes);
         if (skip)
         {
             ptr += nBytes;
@@ -2710,18 +2795,19 @@ char* UnpackDataSize(char* ptr, int major, int minor, int& nBytes, bool skip /*=
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackForcePlateData( char* ptr, int major, int minor )
+char* UnpackForcePlateData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Force Plate data (NatNet version 2.9 and later)
     if( ( ( major == 2 ) && ( minor >= 9 ) ) || ( major > 2 ) )
     {
         int nForcePlates;
         const int kNFramesShowMax = 4;
         memcpy( &nForcePlates, ptr, 4 ); ptr += 4;
-        printf( "Force Plate Count: %d\n", nForcePlates );
+        printf( "%sForce Plate Count: %d\n", outTabStr.c_str(), nForcePlates );
 
         int nBytes=0;
-        ptr = UnpackDataSize(ptr, major, minor,nBytes);
+        ptr = UnpackDataSize(ptr, major, minor,nBytes, level);
 
         for( int iForcePlate = 0; iForcePlate < nForcePlates; iForcePlate++ )
         {
@@ -2731,11 +2817,13 @@ char* UnpackForcePlateData( char* ptr, int major, int minor )
             // Channel Count
             int nChannels = 0; memcpy( &nChannels, ptr, 4 ); ptr += 4;
 
-            printf( "Force Plate %3.1d ID: %3.1d Num Channels: %3.1d\n", iForcePlate, ID, nChannels );
+            printf( "%sForce Plate %3.1d\n", outTabStr.c_str(), iForcePlate );
+            printf( "%s  ID           : %3.1d  Channel Count: %3.1d\n", outTabStr.c_str(), ID, nChannels );
 
             // Channel Data
             for( int i = 0; i < nChannels; i++ )
             {
+                printf( "%s", outTabStr.c_str() );
                 printf( "  Channel %d : ", i );
                 int nFrames = 0; memcpy( &nFrames, ptr, 4 ); ptr += 4;
                 printf( "  %3.1d Frames - Frame Data: ", nFrames );
@@ -2750,7 +2838,7 @@ char* UnpackForcePlateData( char* ptr, int major, int minor )
                 }
                 if( nFramesShow < nFrames )
                 {
-                    printf( " showing %3.1d of %3.1d frames", nFramesShow, nFrames );
+                    printf( " - Showing %3.1d of %3.1d frames", nFramesShow, nFrames );
                 }
                 printf( "\n" );
             }
@@ -2767,18 +2855,20 @@ char* UnpackForcePlateData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackDeviceData( char* ptr, int major, int minor )
+char* UnpackDeviceData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Device data (NatNet version 3.0 and later)
     if( ( ( major == 2 ) && ( minor >= 11 ) ) || ( major > 2 ) )
     {
         const int kNFramesShowMax = 4;
         int nDevices;
         memcpy( &nDevices, ptr, 4 ); ptr += 4;
+        printf( "%s", outTabStr.c_str() );
         printf( "Device Count: %d\n", nDevices );
 
         int nBytes=0;
-        ptr = UnpackDataSize(ptr, major, minor,nBytes);
+        ptr = UnpackDataSize(ptr, major, minor,nBytes, level+1);
 
         for( int iDevice = 0; iDevice < nDevices; iDevice++ )
         {
@@ -2788,11 +2878,13 @@ char* UnpackDeviceData( char* ptr, int major, int minor )
             // Channel Count
             int nChannels = 0; memcpy( &nChannels, ptr, 4 ); ptr += 4;
 
+            printf( "%s", outTabStr.c_str() );
             printf( "Device %3.1d      ID: %3.1d Num Channels: %3.1d\n", iDevice, ID, nChannels );
 
             // Channel Data
             for( int i = 0; i < nChannels; i++ )
             {
+                printf( "%s", outTabStr.c_str() );
                 printf( "  Channel %d : ", i );
                 int nFrames = 0; memcpy( &nFrames, ptr, 4 ); ptr += 4;
                 printf( "  %3.1d Frames - Frame Data: ", nFrames );
@@ -2823,13 +2915,15 @@ char* UnpackDeviceData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackFrameSuffixData( char* ptr, int major, int minor )
+char* UnpackFrameSuffixData( char* ptr, int major, int minor, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
 
     // software latency (removed in version 3.0)
     if( major < 3 )
     {
         float softwareLatency = 0.0f; memcpy( &softwareLatency, ptr, 4 );	ptr += 4;
+        printf( "%s", outTabStr.c_str() );
         printf( "software latency : %3.3f\n", softwareLatency );
     }
 
@@ -2853,6 +2947,7 @@ char* UnpackFrameSuffixData( char* ptr, int major, int minor )
         memcpy( &fTemp, ptr, 4 ); ptr += 4;
         timestamp = (double) fTemp;
     }
+    printf( "%s", outTabStr.c_str() );
     printf( "Timestamp : %3.3f\n", timestamp );
 
     // high res timestamps (version 3.0 and later)
@@ -2860,14 +2955,17 @@ char* UnpackFrameSuffixData( char* ptr, int major, int minor )
     {
         uint64_t cameraMidExposureTimestamp = 0;
         memcpy( &cameraMidExposureTimestamp, ptr, 8 ); ptr += 8;
+        printf( "%s", outTabStr.c_str() );
         printf( "Mid-exposure timestamp         : %" PRIu64"\n", cameraMidExposureTimestamp );
 
         uint64_t cameraDataReceivedTimestamp = 0;
         memcpy( &cameraDataReceivedTimestamp, ptr, 8 ); ptr += 8;
+        printf( "%s", outTabStr.c_str() );
         printf( "Camera data received timestamp : %" PRIu64"\n", cameraDataReceivedTimestamp );
 
         uint64_t transmitTimestamp = 0;
         memcpy( &transmitTimestamp, ptr, 8 ); ptr += 8;
+        printf( "%s", outTabStr.c_str() );
         printf( "Transmit timestamp             : %" PRIu64"\n", transmitTimestamp );
     }
 
@@ -2876,11 +2974,13 @@ char* UnpackFrameSuffixData( char* ptr, int major, int minor )
     {
         uint32_t PrecisionTimestampSecs = 0;
         memcpy(&PrecisionTimestampSecs, ptr, 4); ptr += 4;
-        printf("Precision timestamp seconds : %d\n", PrecisionTimestampSecs);
+        printf( "%s", outTabStr.c_str() );
+        printf("Precision timestamp (seconds) : %d\n", PrecisionTimestampSecs);
 
         uint32_t PrecisionTimestampFractionalSecs = 0;
         memcpy(&PrecisionTimestampFractionalSecs, ptr, 4); ptr += 4;
-        printf("Precision timestamp fractional seconds : %d\n", PrecisionTimestampFractionalSecs);
+        printf( "%s", outTabStr.c_str() );
+        printf("Precision timestamp (fractional seconds) : %d\n", PrecisionTimestampFractionalSecs);
     }
 
     // frame params
@@ -2906,8 +3006,9 @@ char* UnpackFrameSuffixData( char* ptr, int major, int minor )
  * \param minor - NatNet minor version
  * \return - pointer after decoded object
 */
-char* UnpackPacketHeader( char* ptr, int& messageID, int& nBytes, int& nBytesTotal )
+char* UnpackPacketHeader( char* ptr, int& messageID, int& nBytes, int& nBytesTotal, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // First 2 Bytes is message ID
     memcpy( &messageID, ptr, 2 ); ptr += 2;
 
@@ -2933,8 +3034,9 @@ char* UnpackPacketHeader( char* ptr, int& messageID, int& nBytes, int& nBytesTot
  * \param ptr - input data stream pointer
  * \return - pointer after decoded object
 */
-char* Unpack( char* pData )
+char* Unpack( char* pData, unsigned int level )
 {
+    std::string outTabStr = GetTabString( kTabStr, level );
     // Checks for NatNet Version number. Used later in function. 
     // Packets may be different depending on NatNet version.
     int major = gNatNetVersion[0];
@@ -2942,7 +3044,10 @@ char* Unpack( char* pData )
     bool packetProcessed = true;
     char* ptr = pData;
 
-    printf( "Begin Packet\n-----------------\n" );
+    printf( "%s", outTabStr.c_str() );
+    printf( "MoCap Frame Begin\n" );
+    printf( "-----------------\n" );
+    printf( "%s", outTabStr.c_str() );
     printf( "NatNetVersion %d %d %d %d\n",
         gNatNetVersion[0], gNatNetVersion[1],
         gNatNetVersion[2], gNatNetVersion[3] );
@@ -2950,47 +3055,63 @@ char* Unpack( char* pData )
     int messageID = 0;
     int nBytes = 0;
     int nBytesTotal = 0;
-    ptr = UnpackPacketHeader( ptr, messageID, nBytes, nBytesTotal );
+    ptr = UnpackPacketHeader( ptr, messageID, nBytes, nBytesTotal, level+1 );
 
     switch( messageID )
     {
     case NAT_CONNECT:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_CONNECT\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_SERVERINFO:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_SERVERINFO\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_REQUEST:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_REQUEST\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_RESPONSE:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_RESPONSE\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_REQUEST_MODELDEF:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_REQUEST_MODELDEF\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_MODELDEF:
         // Data Descriptions
     {
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_MODELDEF\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
-        ptr = UnpackDescription( ptr, nBytes, major, minor );
+        ptr = UnpackDescription( ptr, nBytes, major, minor, level );
     }
     break;
     case NAT_REQUEST_FRAMEOFDATA:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_REQUEST_FRAMEOFDATA\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_FRAMEOFDATA:
     {
         /*
             // FRAME OF MOCAP DATA packet
+                printf( "%s", outTabStr.c_str() );
             printf("Message ID  : %d NAT_FRAMEOFDATA\n", messageID);
+                printf( "%s", outTabStr.c_str() );
             printf("Packet Size : %d\n", nBytes);
         */
 
@@ -3004,52 +3125,70 @@ char* Unpack( char* pData )
         gBitstreamVersionChanged = ( params & 0x08 ) != 0;            // 0x04 Bitstream syntax version has changed
         if( gBitstreamChangePending )
         {
+            printf( "%s", outTabStr.c_str() );
             printf( "========================================================================================\n" );
+            printf( "%s", outTabStr.c_str() );
             printf( " BITSTREAM CHANGE IN - PROGRESS\n" );
             if( gBitstreamVersionChanged )
             {
                 gBitstreamChangePending = false;
+                printf( "%s", outTabStr.c_str() );
                 printf( "  -> Bitstream Changed\n" );
             }
             else
             {
+                printf( "%s", outTabStr.c_str() );
                 printf( "   -> Skipping Frame\n" );
                 packetProcessed = false;
             }
         }
         if( !gBitstreamChangePending )
         {
-            ptr = UnpackFrameData( ptr, nBytes, major, minor );
+            ptr = UnpackFrameData( ptr, nBytes, major, minor, level );
             packetProcessed = true;
         }
     }
     break;
     case NAT_MESSAGESTRING:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_MESSAGESTRING\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_DISCONNECT:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_DISCONNECT\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_KEEPALIVE:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_KEEPALIVE\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     case NAT_UNRECOGNIZED_REQUEST:
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d NAT_UNRECOGNIZED_REQUEST\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
         break;
     default:
     {
+        printf( "%s", outTabStr.c_str() );
         printf( "Unrecognized Packet Type.\n" );
+        printf( "%s", outTabStr.c_str() );
         printf( "Message ID  : %d\n", messageID );
+        printf( "%s", outTabStr.c_str() );
         printf( "Packet Size : %d\n", nBytes );
     }
     break;
     }
 
-    printf( "End Packet\n-----------------\n" );
+    printf( "%s", outTabStr.c_str() );
+    printf( "MoCap Frame End\n" );
+    printf( "-----------------\n" );
+
 
     // check for full packet processing
     if( packetProcessed )
@@ -3057,11 +3196,13 @@ char* Unpack( char* pData )
         long long nBytesProcessed = (long long) ptr - (long long) pData;
         if( nBytesTotal != nBytesProcessed )
         {
+            printf( "%s", outTabStr.c_str() );
             printf( "WARNING: %d expected but %lld bytes processed\n",
                 nBytesTotal, nBytesProcessed );
             if( nBytesTotal > nBytesProcessed )
             {
                 int count = 0, countLimit = 8 * 25;// put on 8 byte boundary
+                printf( "%s", outTabStr.c_str() );
                 printf( "Sample of remaining bytes:\n" );
                 char* ptr_start = ptr;
                 int nCount = (int) nBytesProcessed;
@@ -3083,6 +3224,7 @@ char* Unpack( char* pData )
                 countLimit = countLimit - ( charPos + 1 );
                 while( nCount < nBytesTotal )
                 {
+                    printf( "%s", outTabStr.c_str() );
                     tmpChar = ' ';
                     if( isalnum( *ptr ) )
                     {

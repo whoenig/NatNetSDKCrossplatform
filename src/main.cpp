@@ -20,7 +20,7 @@ constexpr int PORT_COMMAND = 1510;
 constexpr int PORT_DATA = 1511;
 constexpr int MAX_PACKETSIZE = 100000;  // max size of packet (actual packet size is dynamic)
 
-void Unpack(char* pData);
+char* Unpack( char* pPacketIn, unsigned int level=0 );
 void buildConnectPacket(std::vector<char>& buffer);
 void UnpackCommand(char* pData);
 
@@ -29,10 +29,10 @@ using boost::asio::ip::udp;
 class receiver
 {
 public:
-  receiver(boost::asio::io_service& io_service,
+  receiver(boost::asio::io_context& io_context,
       const boost::asio::ip::address& listen_address,
       const boost::asio::ip::address& multicast_address)
-    : socket_(io_service)
+    : socket_(io_context)
     , sender_endpoint_()
     , data_(20000)
   {
@@ -83,15 +83,15 @@ int main(int argc, char* argv[])
 
     if (argc != 2)
     {
-      std::cerr << "Usage: natnettest <host>\n";
+      std::cerr << "Usage: packetClient <host>\n";
       return 1;
     }
 
-    boost::asio::io_service io_service_cmd;
+    boost::asio::io_context io_context_cmd;
 
-    udp::socket socket_cmd(io_service_cmd, udp::endpoint(udp::v4(), 0));
+    udp::socket socket_cmd(io_context_cmd, udp::endpoint(udp::v4(), 0));
 
-    udp::resolver resolver_cmd(io_service_cmd);
+    udp::resolver resolver_cmd(io_context_cmd);
     udp::endpoint endpoint_cmd = *resolver_cmd.resolve({udp::v4(), argv[1], std::to_string(PORT_COMMAND)});
 
     std::vector<char> connectCmd;
@@ -106,11 +106,11 @@ int main(int argc, char* argv[])
     UnpackCommand(reply.data());
 
     // Listen on multicast address
-    boost::asio::io_service io_service;
-    receiver r(io_service,
+    boost::asio::io_context io_context;
+    receiver r(io_context,
         boost::asio::ip::address::from_string("0.0.0.0"),
         boost::asio::ip::address::from_string(MULTICAST_ADDRESS));
-    io_service.run();
+    io_context.run();
   }
   catch (std::exception& e)
   {
