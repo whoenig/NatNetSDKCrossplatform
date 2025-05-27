@@ -118,3 +118,8 @@
 // Response: int32_t value indicating whether the command successfully reoriented the asset. Zero if successful.
 // Example command string: "ResetAssetOrientation,RigidBody1"
 #define NATNET_REQUEST_RESETASSETORIENTATION "ResetAssetOrientation"
+
+// Parameters: Node (asset) name (case sensitive)
+// Response: int32_t value indicating whether the command successfully reoriented the asset. Zero if successful.
+// Example command string: "ResetAssetLocation,RigidBody1"
+#define NATNET_REQUEST_RESETASSETLOCATION "ResetAssetLocation"
