@@ -289,7 +289,7 @@ int main( int argc, char* argv[] )
     }
 
 	// Main thread loop
-    // Data will be delivered in a separate thread to DataHandler() callback functon
+    // Data will be delivered in a separate thread to DataHandler() callback function
 	printf("\n[SampleClient] Client is connected to server and listening for data...\n");
 	bool bRunning = true;
     while (bRunning)
@@ -518,7 +518,7 @@ int ConnectClient()
     if (retCode != ErrorCode_OK)
     {
         // Connection failed - print connection error code
-        printf("[SampleClinet] Unable to connect to server.  Error code: %d. Exiting.\n", retCode);
+        printf("[SampleClient] Unable to connect to server.  Error code: %d. Exiting.\n", retCode);
         return ErrorCode_Internal;
     }
     else
