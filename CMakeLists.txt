@@ -5,7 +5,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
-find_package(Boost 1.5 REQUIRED COMPONENTS system thread)
+find_package(Boost 1.5 REQUIRED COMPONENTS thread)
 
 # Enable C++14 and warnings
 set(CMAKE_CXX_STANDARD 14)
@@ -21,7 +21,7 @@ add_executable(packetClient
   samples/PacketClient/PacketClient.cpp
 )
 target_link_libraries(packetClient
-  Boost::system
+  Boost::boost
   Boost::thread
 )
 
